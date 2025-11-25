@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router-dom'
 
 import Header from './components/Header'
 import Footer from './components/Footer'
+import Chatbot from './components/Chatbot'
 
 import { GlobalProvider } from './context/globalContext'
 import { router } from './utils/Router'
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         }
       </Routes>
       <Footer />
+      <Chatbot />
     </GlobalProvider>
   </BrowserRouter>
 )
