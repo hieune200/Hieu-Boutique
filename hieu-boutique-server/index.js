@@ -23,6 +23,4 @@ app.get('/', (req, res)=>{
 app.use('/products/',products)
 app.use('/auth/', authenticate)
 app.use('/chatbot/', chatbot)
-app.listen(port, () => {
-    console.log(`link is: http://localhost:${port}`)
-})
+export default app;
