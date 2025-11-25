@@ -80,21 +80,21 @@ const UserPage = ()=>{
                     <img src={userData?.avatar} alt="avt" className="sidebar_avt_img" />
                     <div className="sidebar_avt_username">
                         <p>{userData?.username}</p>
-                        <p onClick={()=>goToPath('/user/profile')} >Sửa hồ sơ</p>
+                    <p onClick={()=>nav('/user/profile')} >Sửa hồ sơ</p>
                     </div>
                 </div>
                 <nav className="sidebar_nav">
                     <ul>
-                        <li onClick={()=>goToPath('/user/profile')} >Tài khoản của tôi</li>
+                        <li onClick={()=>nav('/user/profile')} >Tài khoản của tôi</li>
                         <ul className="sidebar_nav_list">
-                            <li onClick={()=>goToPath('/user/profile')} >Hồ sơ</li>
+                            <li onClick={()=>nav('/user/profile')} >Hồ sơ</li>
                             <li>Ngân Hàng</li>
                             <li>Địa Chỉ</li>
                             <li>Đổi Mật Khẩu</li>
                             <li>Cài Đặt Thông Báo</li>
                             <li>Những  Thiết Lập Riêng Tư</li>
                         </ul>
-                        <li onClick={()=>goToPath('/user/order')} >Đơn Mua</li>
+                        <li onClick={()=>nav('/user/order')} >Đơn Mua</li>
                         <li>Thông báo</li>
                         <li>Kho Voucher</li>
                     </ul>
@@ -197,7 +197,7 @@ const UserPage = ()=>{
                                                     {
                                                         order.orderStatus === "pending" && <div className="btn bg-black">Hủy đơn</div>
                                                     }
-                                                    <div className="btn" onClick={()=> goToPath('/contacts')}>Liên hệ người bán</div>
+                                                    <div className="btn" onClick={()=> nav('/contacts')}>Liên hệ người bán</div>
                                                 </div>
                                             </div>
                                         </div>
