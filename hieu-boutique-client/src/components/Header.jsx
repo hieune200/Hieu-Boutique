@@ -46,7 +46,7 @@ const Header = ()=>{
                 <div className="logo_img">
                     <img src={logo} alt="logo" />
                 </div>
-                <p className="logo_name">hieu boutique</p>
+                <p className="logo_name">HIEU BOUTIQUE</p>
             </div>
             <nav className="navigation">
                 <Link to='/' className="nav-t1 pointer">Trang chủ</Link>
