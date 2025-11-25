@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import OrderItem from './OrderItem'
@@ -20,14 +20,7 @@ const UserPage = ()=>{
         window.scrollTo({top: '0', behavior: 'smooth'})
         if (!userID) nav('/login')
     }, [feature, userID, nav])
-    useEffect(()=>{
-        setLoading(true)
-        setUserID(sessionStorage.getItem("userID"))
-        if (feature == 'profile') getUserInfor()
-        if (feature == 'order') getOrderList()
-    },[feature, userID])
-
-    async function getUserInfor (){
+    const getUserInfor = useCallback(async ()=>{
         const response = await getInfor()
         if (response.status != 201){
             alert(response.message)
@@ -36,9 +29,8 @@ const UserPage = ()=>{
         }
         setLoading(false)
         setUserData(response.data)
-    }
-
-    async function getOrderList (){
+    }, [nav])
+    const getOrderList = useCallback(async ()=>{
         const res = await getOrder()
         if (res.status != 201){
             alert(res.message)
@@ -46,8 +38,13 @@ const UserPage = ()=>{
         }
         setLoading(false)
         setOrderList(res.data.reverse())
-    
-    }
+    }, [])
+    useEffect(()=>{
+        setLoading(true)
+        setUserID(sessionStorage.getItem("userID"))
+        if (feature == 'profile') getUserInfor()
+        if (feature == 'order') getOrderList()
+    },[feature, userID, getUserInfor, getOrderList])
     const handleReBuy = () => {
         // TODO: Implement re-buy functionality
         alert('Chức năng mua lại chưa được triển khai');

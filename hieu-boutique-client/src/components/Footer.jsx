@@ -30,10 +30,10 @@ const Footer = ()=>{
             <section className="footer_mid">
                 <div className="footer_mid_contacts">
                     <h5>Liên hệ</h5>
-                    <p>Hotline: 0322.555.777</p>
-                    <p>Địa chỉ: 284/5 Tổ 8, Ấp 3, phường Hội Nghĩa, tx. Tân Uyên, Tỉnh Bình Dương</p>
+                    <p>Hotline: 0869.600.976</p>
+                    <p>Địa chỉ: 242 Điện Biên Phủ, Phường Thanh Khê, Đà Nẵng</p>
                     <p>Liên hệ: 0823.823.823</p>
-                    <p>Zalo: 0799 779 777</p>
+                    <p>Zalo: 0869 600 976</p>
                     <p>Email: cskh@hieuboutique.com</p>
                 </div>
                 <div className="footer_mid_company">
@@ -55,7 +55,7 @@ const Footer = ()=>{
                 </div>
             </section>
             <section className="footer_bot">
-                <p>Bản quyền thuộc về Công Ty TNHH Thời Trang HIEU</p>
+                <p>Bản quyền thuộc về Công Ty TNHH Thời Trang HIEU Boutique</p>
             </section>
         </footer>
     )

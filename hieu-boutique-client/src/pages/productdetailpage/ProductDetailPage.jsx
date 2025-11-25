@@ -28,7 +28,7 @@ const ProductDetailPage = ()=>{
         getData(category, id)
         setQuantity(1)
         setProdSize('S')
-    },[id])  
+    },[id, category])  
     const handleChangeQuantity = (num)=>{
         let newQuantity = num + quantity
         if(newQuantity <= 0 || newQuantity > data?.prodData.warehouse){

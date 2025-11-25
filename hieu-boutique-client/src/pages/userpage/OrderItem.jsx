@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { productDetail } from '../../services/products.api'
 
@@ -9,13 +9,13 @@ function OrderItem ({item, index}){
     const nav =  useNavigate()
     const goToPath = (path)=>{nav(path)}
     const [data,  setData] = useState()
-    async  function getData(){
+    const getData = useCallback(async ()=>{
         const res = await productDetail(item.id)
         setData(res.data)
-    }
+    }, [item.id])
     useEffect(()=>{
         getData()
-    }, [item.id])
+    }, [getData])
     return(
         <div className='item' key={index} onClick={()=>goToPath(`/productdetail/${item.category}/${item.id}`)}>
             <img src={data?.img} className='pointer' alt="item" onClick={()=> goToPath(`/productdetail/${item.category}/${item.id}`)}/>
