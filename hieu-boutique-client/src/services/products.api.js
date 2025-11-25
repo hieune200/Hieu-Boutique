@@ -1,6 +1,6 @@
 
 // const url = "http://localhost:3000/products"
-const url = "https://hieu-boutique-onx8d3dvq-hieunguyens-projects-2184091d.vercel.app/products"
+const url = "https://hieu-boutique-ignh6o5b0-hieunguyens-projects-2184091d.vercel.app/products"
 
 async function categoryAPI(category){
     const categoryData = await fetch(`${url}/category/${category}`).then(res=>res.json())

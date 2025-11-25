@@ -1,6 +1,6 @@
 
 // const url = "http://localhost:3000/auth"
-const url = "https://hieu-boutique-onx8d3dvq-hieunguyens-projects-2184091d.vercel.app/auth"
+const url = "https://hieu-boutique-ignh6o5b0-hieunguyens-projects-2184091d.vercel.app/auth"
 
 async function registerAPI (data) {
     const res = await fetch(`${url}/register`, {

@@ -7,6 +7,7 @@ import Collections from './Collection'
 import HotProducts from './HotProducts'
 import NewProductList from './NewProductList'
 import News from './News'
+import Chatbot from '../../components/Chatbot'
 import './homepageStyle/Homepage.scss'
 
 const Homepage = ()=>{
@@ -21,6 +22,7 @@ const Homepage = ()=>{
             <HotProducts />
             <NewProductList />
             <News />
+            <Chatbot />
         </main>
     )
 }

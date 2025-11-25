@@ -5,44 +5,48 @@ class ActionProvider {
     this.createClientMessage = createClientMessage;
   }
 
+  async handleMessage(message) {
+    try {
+      const response = await fetch('https://hieu-boutique-onx8d3dvq-hieunguyens-projects-2184091d.vercel.app/chatbot/ask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+      const data = await response.json();
+      const botMessage = this.createChatBotMessage(data.response);
+      this.setState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, botMessage],
+      }));
+    } catch (error) {
+      const botMessage = this.createChatBotMessage("Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.");
+      this.setState((prev) => ({
+        ...prev,
+        messages: [...prev.messages, botMessage],
+      }));
+    }
+  }
+
   handleHello = () => {
-    const message = this.createChatBotMessage("Chào bạn! Rất vui được gặp bạn. Bạn cần hỗ trợ gì về sản phẩm của Hieu-Boutique?");
-    this.setState((prev) => ({
-      ...prev,
-      messages: [...prev.messages, message],
-    }));
+    this.handleMessage("Xin chào");
   };
 
   handleProducts = () => {
-    const message = this.createChatBotMessage("Chúng tôi có nhiều loại quần áo, phụ kiện cho nữ. Bạn có thể xem tại trang chủ hoặc tìm kiếm sản phẩm!");
-    this.setState((prev) => ({
-      ...prev,
-      messages: [...prev.messages, message],
-    }));
+    this.handleMessage("Tôi muốn hỏi về sản phẩm");
   };
 
   handleOrder = () => {
-    const message = this.createChatBotMessage("Để đặt hàng, hãy thêm sản phẩm vào giỏ và tiến hành thanh toán. Nếu cần hỗ trợ, liên hệ hotline!");
-    this.setState((prev) => ({
-      ...prev,
-      messages: [...prev.messages, message],
-    }));
+    this.handleMessage("Tôi muốn hỏi về đặt hàng");
   };
 
   handleContact = () => {
-    const message = this.createChatBotMessage("Liên hệ chúng tôi qua email: hieu@boutique.com hoặc hotline: 0123-456-789. Chúng tôi luôn sẵn sàng hỗ trợ!");
-    this.setState((prev) => ({
-      ...prev,
-      messages: [...prev.messages, message],
-    }));
+    this.handleMessage("Tôi muốn hỏi về liên hệ");
   };
 
   handleDefault = () => {
-    const message = this.createChatBotMessage("Xin lỗi, tôi chưa hiểu rõ câu hỏi của bạn. Bạn có thể hỏi về sản phẩm, đặt hàng hoặc liên hệ nhé!");
-    this.setState((prev) => ({
-      ...prev,
-      messages: [...prev.messages, message],
-    }));
+    this.handleMessage("Tôi có câu hỏi khác");
   };
 }
 

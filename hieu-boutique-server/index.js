@@ -4,6 +4,7 @@ import cors from "cors"
 
 import authenticate from "./src/routers/authenticate.route.js";
 import products from "./src/routers/products.route.js";
+import chatbot from "./src/routers/chatbot.route.js";
 
 const app = express();
 const port = 3000;
@@ -21,6 +22,7 @@ app.get('/', (req, res)=>{
 
 app.use('/products/',products)
 app.use('/auth/', authenticate)
+app.use('/chatbot/', chatbot)
 app.listen(port, () => {
     console.log(`link is: http://localhost:${port}`)
 })
