@@ -2,6 +2,10 @@ import { useState, useEffect, useContext } from 'react'
 import './homepageStyle/PromoFeatures.scss'
 import { globalContext } from '../../context/globalContext'
 import voucherImg from '../../assets/imgs/common/voucher.png'
+import shippingIcon from '../../assets/imgs/contact-icons/shipping.svg'
+import exchangeIcon from '../../assets/imgs/contact-icons/info.svg'
+import warrantyIcon from '../../assets/imgs/contact-icons/payment.svg'
+import supportIcon from '../../assets/imgs/contact-icons/vip.svg'
 
 // banner images and inline SvgGift were removed (not used in current layout)
 
@@ -78,6 +82,21 @@ const PromoFeatures = ()=>{
   return (
     <section className="promo-features">
 
+      <div className="feature-icons">
+        {[
+          { id: 'f1', icon: shippingIcon, title: 'MIỄN PHÍ GIAO HÀNG ĐƠN TỪ 499K', sub: 'Giao hàng nhanh chóng' },
+          { id: 'f2', icon: exchangeIcon, title: 'ĐỔI HÀNG LINH HOẠT', sub: 'Trong vòng 15 ngày kể từ ngày mua' },
+          { id: 'f3', icon: warrantyIcon, title: 'BẢO HÀNH SẢN PHẨM', sub: 'Trong vòng 6 tháng kể từ ngày mua' },
+          { id: 'f4', icon: supportIcon, title: 'TƯ VẤN NHANH CHÓNG', sub: 'Hỗ trợ từ 7h30-23h mỗi ngày' }
+        ].map(f => (
+          <div className="feature" key={f.id}>
+            <div className="feature-icon"><img src={f.icon} alt={f.title} /></div>
+            <div className="feature-title">{f.title}</div>
+            <div className="feature-sub">{f.sub}</div>
+          </div>
+        ))}
+      </div>
+
       <div className="coupons-row">
         {coupons.map(c => (
           <div className="coupon" key={c.id}>
@@ -99,6 +118,8 @@ const PromoFeatures = ()=>{
           </div>
         ))}
       </div>
+
+      
 
       {toast && <div className="promo-toast">{toast}</div>}
     </section>
