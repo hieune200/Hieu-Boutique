@@ -18,6 +18,14 @@ const Cart = ({ setCartControl })=>{
     }
     const firstItem = Array.isArray(cartData) && cartData.length ? cartData[0] : null
 
+    const subtotal = Array.isArray(cartData) && cartData.length ? cartData.reduce((a,e)=>a+e.count,0) : 0
+    const SHIPPING_THRESHOLD = 499000
+    const DEFAULT_SHIPPING_FEE = 25000
+    const shippingFee = subtotal >= SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE
+    const discount = appliedCoupon ? (appliedCoupon.discount || 0) : 0
+    const afterDiscount = Math.max(0, subtotal - discount)
+    const finalTotal = afterDiscount + shippingFee
+
     return(
         <section className="cart">
             <div className="coating pointer" onClick={()=>setCartControl(false)} />
@@ -76,20 +84,29 @@ const Cart = ({ setCartControl })=>{
                                 }
                             </div>
                             <div className="pay">
-                                <p className="total">
-                                    Tổng tiền: <span>{cartData.reduce((a,e)=>a+e.count,0).toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}</span>
-                                </p>
-                                {appliedCoupon && (
-                                    <div className="coupon-applied">
-                                        <div className="coupon-line">
-                                            <strong>Mã đã áp dụng:</strong> <span className="code">{appliedCoupon.code}</span>
-                                            <button className="clear-coupon" onClick={()=>{ clearCoupon(); setReload(!reload) }}>Xóa</button>
-                                        </div>
-                                        <div className="discount-line">Giảm: <span>{(appliedCoupon.discount || 0).toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}</span></div>
-                                        <div className="grand-total">Tổng sau giảm: <span>{Math.max(0, cartData.reduce((a,e)=>a+e.count,0) - (appliedCoupon.discount||0)).toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}</span></div>
+                                <div className="summary">
+                                    <div className="line">
+                                        <span className="label">Tạm tính</span>
+                                        <span className="amount">{subtotal.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}</span>
                                     </div>
-                                )}
-                                <Link to="/checkout" className="btn pointer unselect" onClick={() => {setCartControl(false)}}>Mua hàng</Link>
+                                    <div className="line">
+                                        <span className="label">Giảm giá</span>
+                                        <span className="amount">{discount ? `- ${discount.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}` : '0 VND'}</span>
+                                    </div>
+                                    <div className="line">
+                                        <span className="label">Phí giao hàng</span>
+                                        <span className="amount shipping-amount">{shippingFee === 0 ? '- Phí ship' : shippingFee.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}</span>
+                                    </div>
+                                    <div className="line total">
+                                        <strong className="label">Tổng</strong>
+                                        <strong className="amount total-amount">{finalTotal.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}</strong>
+                                    </div>
+                                </div>
+
+                                <div className="actions">
+                                    <Link to="/" className="btn secondary small pointer unselect" onClick={() => {setCartControl(false)}}>Trở về trang chủ</Link>
+                                    <Link to="/checkout" className="btn primary small pointer unselect" onClick={() => {setCartControl(false)}}>Xác nhận đặt hàng</Link>
+                                </div>
                             </div>
                         </div>
                     </div>

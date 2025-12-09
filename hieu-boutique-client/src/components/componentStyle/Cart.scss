@@ -104,8 +104,16 @@
     .infor { flex: 1; display: flex; align-items: flex-start; gap: 8px; }
     .icon-recycle-bin { width: 24px; }
 
-    .pay { margin-top: 12px; display: flex; align-items: center; width: 100%; }
-    .pay .total { font-weight: 700; }
+    .pay { margin-top: 12px; display: flex; align-items: flex-end; justify-content: space-between; width: 100%; gap: 12px; }
+    .pay .summary{ flex:1 1 60%; background: transparent; padding: 8px 6px; }
+    .pay .summary .line{ display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom: 1px solid #f3f3f3 }
+    .pay .summary .line.total{ border-top: 1px solid #eee; margin-top:6px; padding-top:10px }
+    .pay .summary .label{ color:#333 }
+    .pay .summary .amount{ font-weight:700; color:#111 }
+    .pay .summary .amount.total-amount{ font-size:1.15rem; }
+    .pay .summary .shipping-amount{ color:#a00; font-weight:700 }
+
+    .pay .actions{ flex:0 0 40%; display:flex; gap:12px; justify-content:flex-end; align-items:center }
 
     .coupon-applied { display: flex; flex-direction: column; gap: 6px; margin-right: 12px; align-items: flex-end; font-size: 13px; }
     .coupon-line { display: flex; gap: 8px; align-items: center; }
@@ -116,13 +124,18 @@
 
     .btn {
         background-color: rgb(0,53,0);
-        padding: 10px 40px;
-        border-radius: 25px;
+        padding: 8px 18px;
+        border-radius: 18px;
         font-weight: 600;
         color: white;
         text-decoration: none;
         display: inline-block;
+        font-size: 14px;
+        line-height: 1;
     }
+    .btn.small{ padding:6px 12px; font-size:13px; border-radius:12px }
+    .btn.secondary{ background: #f2f2f2; color: #222 }
+    .btn.primary{ background: #c21; color: #fff }
     .btn:hover { transition: all .2s linear; box-shadow: 3px 3px 5px 0 rgb(203,203,203); transform: translate(-1px,-1px); }
     .btn:active { box-shadow: unset; transform: unset; }
 
@@ -130,7 +143,10 @@
         .cart-detail { width: 96%; max-width: 720px; }
         .cart-body { flex-direction: column; }
         .preview { flex: 0 0 auto; border-top-left-radius: 12px; border-bottom-left-radius: 0; }
-        .detail { padding: 12px; }
+        .detail { padding: 10px; }
+        .pay{ flex-direction: column-reverse; gap:8px }
+        .pay .actions{ justify-content:space-between; width:100% }
+        .pay .summary .line{ padding:4px 0 }
     }
 
     @keyframes cart-smooth {
