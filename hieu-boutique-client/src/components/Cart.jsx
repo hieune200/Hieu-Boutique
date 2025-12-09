@@ -19,11 +19,13 @@ const Cart = ({ setCartControl })=>{
     const firstItem = Array.isArray(cartData) && cartData.length ? cartData[0] : null
 
     const subtotal = Array.isArray(cartData) && cartData.length ? cartData.reduce((a,e)=>a+e.count,0) : 0
+    const itemCount = Array.isArray(cartData) && cartData.length ? cartData.reduce((a,e)=>a+(e.quantity||1),0) : 0
     const SHIPPING_THRESHOLD = 499000
     const DEFAULT_SHIPPING_FEE = 25000
-    const shippingFee = subtotal >= SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE
     const discount = appliedCoupon ? (appliedCoupon.discount || 0) : 0
     const afterDiscount = Math.max(0, subtotal - discount)
+    // Apply shipping waiver based on amount after discount
+    const shippingFee = afterDiscount >= SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE
     const finalTotal = afterDiscount + shippingFee
 
     return(
@@ -90,6 +92,10 @@ const Cart = ({ setCartControl })=>{
                                         <span className="amount">{subtotal.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}</span>
                                     </div>
                                     <div className="line">
+                                        <span className="label">Số sản phẩm</span>
+                                        <span className="amount">{itemCount}</span>
+                                    </div>
+                                    <div className="line">
                                         <span className="label">Giảm giá</span>
                                         <span className="amount">{discount ? `- ${discount.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}` : '0 VND'}</span>
                                     </div>
@@ -101,6 +107,7 @@ const Cart = ({ setCartControl })=>{
                                         <strong className="label">Tổng</strong>
                                         <strong className="amount total-amount">{finalTotal.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}</strong>
                                     </div>
+                                    <div className="shipping-note">Miễn phí giao hàng cho đơn từ {SHIPPING_THRESHOLD.toLocaleString('it-IT')} VND (sau khi áp dụng mã giảm giá)</div>
                                 </div>
 
                                 <div className="actions">
