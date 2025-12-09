@@ -1,5 +1,5 @@
 
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 
@@ -8,17 +8,27 @@ import { searchProducts } from '../services/products.api'
 import './componentStyle/Cart.scss'
 
 const Search = ({ setSearchControl, searchKeyWork, setSearchKeyWork })=>{
-    const nav = useNavigate()
-    const [searchData, SetSearchData] = useState()
-    console.log(searchData)
+    // navigation not used here
+    const [searchData, SetSearchData] = useState([])
+
     useEffect(()=>{
-        SetSearchData()
+        // if keyword is empty, clear results and don't call backend
+        if (!searchKeyWork || String(searchKeyWork).trim() === ''){
+            SetSearchData([])
+            return
+        }
+        // fetch matching products
         getSearchData(searchKeyWork)
     },[searchKeyWork])
 
     async function getSearchData(keyword){
-        const res = await searchProducts(keyword)
-        SetSearchData(res.data)
+        try{
+            const res = await searchProducts(keyword)
+            // if backend returns wrapper like { data: [...] } or array fallback
+            SetSearchData((res && res.data) ? res.data : (Array.isArray(res) ? res : []))
+        }catch(e){
+            SetSearchData([])
+        }
     }
 
     // if (SetSearchData) return(
@@ -40,7 +50,7 @@ const Search = ({ setSearchControl, searchKeyWork, setSearchKeyWork })=>{
                         {
                             searchData?.map((data, index)=>{
                                 return(
-                                    <div className="card" key={index} onClick={()=>{setSearchKeyWork('');setSearchControl(false);nav(`/productdetail/${data?.category}/${data?._id}`)}}>
+                                    <Link to={`/productdetail/${data?.category}/${data?._id}`} className="card" key={index} onClick={()=>{setSearchKeyWork('');setSearchControl(false)}}>
                                         <div className="card-img">
                                             <img src={data?.img} alt="hieu boutique" />
                                         </div>
@@ -54,7 +64,7 @@ const Search = ({ setSearchControl, searchKeyWork, setSearchKeyWork })=>{
                                                 </p>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 )
                             })
                         }

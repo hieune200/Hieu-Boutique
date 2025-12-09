@@ -1,0 +1,87 @@
+.hb-toast-root {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 360px;
+  pointer-events: none;
+}
+
+.hb-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 30px rgba(12, 23, 40, 0.12);
+  min-width: 260px;
+  color: #0b1220;
+  font-weight: 600;
+  transform: translateX(20px);
+  opacity: 0;
+  animation: hb-toast-in 260ms cubic-bezier(.2,.9,.2,1) forwards;
+  position: relative;
+}
+
+.hb-toast .hb-toast-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  flex: 0 0 34px;
+  /* icon color follows this value (SVG uses currentColor) */
+  color: #b72323;
+}
+
+.hb-toast .hb-toast-icon {
+  display: block;
+}
+
+.hb-toast .hb-toast-body {
+  flex: 1 1 auto;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.hb-toast .hb-toast-close {
+  background: transparent;
+  border: none;
+  color: #444;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.hb-toast.info {
+  border-left: 4px solid #b72323;
+}
+.hb-toast.success {
+  border-left: 4px solid #b72323;
+}
+.hb-toast.error {
+  border-left: 4px solid #b72323;
+}
+
+@keyframes hb-toast-in {
+  from { transform: translateX(20px); opacity: 0 }
+  to { transform: translateX(0); opacity: 1 }
+}
+
+@keyframes hb-toast-out {
+  from { transform: translateX(0); opacity: 1 }
+  to { transform: translateX(20px); opacity: 0 }
+}
+
+/* small responsive tweak */
+@media (max-width: 600px){
+  .hb-toast-root { left: 12px; right: 12px; top: 12px }
+  .hb-toast { min-width: auto }
+}

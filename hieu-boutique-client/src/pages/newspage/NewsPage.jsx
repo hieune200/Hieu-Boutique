@@ -48,14 +48,14 @@ const NewsPage = ()=>{
                             {
                                 hotnewsList.map((hotnews, index)=>{
                                     return(
-                                        <div className="hot-news_list_item pointer" key={index}>
-                                            <img src={hotnews.img} alt="hieu"/>
-                                            <div className="item-content">
-                                                <p className="title">{hotnews.title}</p>
-                                                <p className='content'>{hotnews.content}</p>
+                                            <div className="hot-news_list_item pointer" key={index}>
+                                                <div className="hot-thumb"><img src={hotnews.img} alt="hieu"/></div>
+                                                <div className="item-content">
+                                                    <p className="title">{hotnews.title}</p>
+                                                    <p className='content'>{hotnews.content}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    )
+                                        )
                                 })
                             }
                         </div>

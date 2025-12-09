@@ -9,26 +9,44 @@
         width: 32%;
         padding: 10px;
         border-radius: 23px;
+        position: relative;
+        transition: transform .22s ease, box-shadow .25s ease;
         &:hover{
-            transition: all .15s linear;
-            box-shadow: 0 0 5px 0 #00000035;
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
         }
         img{
             aspect-ratio: 3/4;
             width: 100%;
-            // object-fit: cover;
+            object-fit: cover;
             border-radius: 18px;
+            transition: transform .45s cubic-bezier(.2,.8,.2,1), filter .28s ease;
         }
         .title{
-            margin: 10px 0 20px;
-            font-size: 30px;
+            margin: 8px 0 14px;
+            font-size: 22px;
             text-align: center;
-            letter-spacing: 1px;
+            letter-spacing: 0.4px;
+            color: #000;
+            font-weight: 600;
+            transition: color .18s ease, transform .2s ease;
         }
         .des{
             text-align: center;
-            font-size: 22px;
-            letter-spacing: .5px;
+            font-size: 16px;
+            letter-spacing: .25px;
+            color: #000;
+            margin-bottom: 8px;
+            opacity: 0.95;
+            transition: opacity .2s ease, transform .2s ease;
+            line-height: 1.4;
         }
+    }
+
+    /* scale image slightly on hover for interaction */
+    .collection:hover img,
+    .collection:focus-within img{
+        transform: scale(1.04);
+        filter: contrast(1.02) saturate(1.02);
     }
 }

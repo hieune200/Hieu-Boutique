@@ -2,9 +2,159 @@
     width: 100%;
     &_list{
         width: 1200px;
-        margin: 30px auto 60px;
-        display: flex;
-        justify-content: space-between;
-        gap: 2%;
+        margin: 20px auto 18px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        justify-items: center;
+        align-items: start;
     }
+    /* ensure product cards fill the grid cell and keep consistent sizing */
+    &_list .productcard{
+        width: 100%;
+        max-width: 240px;
+        box-sizing: border-box;
+    }
+    &_footer{
+        width: 1200px;
+        margin: 8px auto 36px;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Banner placed under hot products */
+    .hotproducts_banner{
+        width: 1200px;
+        margin: 12px auto 36px;
+        display: flex;
+        justify-content: center;
+    }
+    .hotproducts_banner .banner_link{
+        display: block;
+        width: 100%;
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        text-decoration: none;
+    }
+    .hotproducts_banner img{
+        width: 100%;
+        display: block;
+        height: auto;
+        object-fit: cover;
+    }
+    /* banner displays image only (CTA removed) */
+    .hotproducts_banner .banner_link{
+        display: block;
+        width: 100%;
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        text-decoration: none;
+    }
+    .hotproducts_viewall{
+        display: inline-block;
+        background: transparent;
+        color: #e53935;
+        padding: 4px 10px;
+        font-size: 13px;
+        border-radius: 18px;
+        text-decoration: none;
+        font-weight: 600;
+        line-height: 1;
+        border: 1px solid #e53935;
+        transition: background .16s ease, color .16s ease, transform .12s ease, box-shadow .12s ease;
+        box-shadow: none;
+    }
+
+    .hotproducts_viewall:hover,
+    .hotproducts_viewall:focus{
+        background: #e53935;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(229,57,53,0.12);
+    }
+    &_pagination{
+        width: 1200px;
+        margin: 20px auto 60px;
+        display: flex;
+        justify-content: center;
+            transition: background .16s ease, color .16s ease, transform .12s ease, box-shadow .12s ease;
+        gap: 12px;
+    }
+    .page_btn{
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        color: #333;
+        padding: 8px 12px;
+        border-radius: 6px;
+
+        /* removed chevron icon */
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    .page_btn[disabled]{
+        opacity: 0.45;
+        cursor: default;
+    }
+    .page_numbers{
+        display: flex;
+        gap: 8px;
+    }
+    .page_num{
+        background: #fff;
+        border: 1px solid #eee;
+        padding: 8px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        min-width: 40px;
+        text-align: center;
+    }
+    .page_num.active{
+        background: #e53935;
+        color: #fff;
+        border-color: #e53935;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(229,57,53,0.18);
+    }
+
+    /* Responsive: adjust grid and container width */
+    @media (max-width: 1100px){
+        &_list{ width: calc(100% - 60px); grid-template-columns: repeat(3, 1fr); }
+        &_list .productcard{ max-width: 300px; }
+        &_pagination, &_footer{ width: calc(100% - 60px); }
+    }
+    @media (max-width: 800px){
+        &_list{ width: calc(100% - 40px); grid-template-columns: repeat(2, 1fr); gap: 18px }
+        &_list .productcard{ max-width: 360px; }
+        .hotproducts_viewall{ padding: 4px 10px; font-size: 13px }
+        &_pagination{ margin: 18px auto 40px }
+    }
+    @media (max-width: 480px){
+        &_list{ width: calc(100% - 32px); grid-template-columns: repeat(1, 1fr); gap: 14px }
+        &_list .productcard{ max-width: 100%; }
+        .page_numbers{ gap: 6px }
+        .page_num{ padding: 6px 8px; min-width: 34px }
+    }
+
+    /* Sale-specific emphasis: when listing sale products, make discount and price stand out */
+    &_list .productcard{ 
+        /* subtle red glow for sale listings */
+        transition: box-shadow .18s ease, transform .12s ease, border-color .12s ease;
+    }
+    &_list .productcard .discount-circle{
+        background: #c62828; /* stronger red */
+        width:46px;
+        height:46px;
+        font-size:15px;
+        right: 10px;
+        top: 10px;
+        box-shadow: 0 6px 18px rgba(198,40,40,0.16);
+    }
+    /* Emphasize sale price and original price style */
+    &_list .productcard .price{ color: #b71c1c; font-size:19px; }
+    &_list .productcard .original{ color:#9a9a9a; font-size:13px }
+    /* Add a subtle border for sale cards to visually separate them */
+    &_list .productcard{ border: 1px solid rgba(198,40,40,0.04); }
+    &_list .productcard:hover{ box-shadow: 0 14px 36px rgba(198,40,40,0.06) }
 }

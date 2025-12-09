@@ -17,5 +17,18 @@ module.exports = {
       'warn',
       { allowConstantExport: true },
     ],
+    // Relax some rules to reduce noisy errors for this codebase
+    'react/prop-types': 'off',
+    'react/no-unescaped-entities': 'off',
+    'no-empty': 'warn',
+    'react-hooks/exhaustive-deps': 'warn',
+    'no-unused-vars': ['warn', { 'argsIgnorePattern': '^_' }],
   },
+  overrides: [
+    {
+      files: ['scripts/**', 'scripts/*'],
+      env: { node: true },
+      rules: { 'no-undef': 'off' }
+    }
+  ],
 }

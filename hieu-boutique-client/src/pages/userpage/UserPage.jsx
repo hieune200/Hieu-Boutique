@@ -1,60 +1,102 @@
 
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom'
 
 import OrderItem from './OrderItem'
+import Bank from './Bank'
+import Address from './Address'
+import ChangePassword from './ChangePassword'
+import NotificationsSettings from './NotificationsSettings'
+import PrivacySettings from './PrivacySettings'
+import Notifications from './Notifications'
+import Vouchers from './Vouchers'
 
 import { getInfor, updateInfor, getOrder } from '../../services/Auth.api'
 import './userpage.scss'
+import { useToast } from '../../components/ToastProvider'
 
 const UserPage = ()=>{
     const nav = useNavigate()
+    const location = useLocation()
     const {feature} = useParams()
     const [ board, setBoard ] = useState()
     const [ orderList, setOrderList ] = useState()    
-    const [ userID, setUserID ] = useState(sessionStorage.getItem("userID"))
+    const [ userID, setUserID ] = useState(localStorage.getItem('userID') || sessionStorage.getItem("userID"))
     const [ userData, setUserData ] = useState()
     const [ loading, setLoading ] = useState(false)
+    const [ showSocialBanner, setShowSocialBanner ] = useState(true)
+    const [ saveMessage, setSaveMessage ] = useState(null)
     useEffect(()=>{
         setBoard(feature)
         window.scrollTo({top: '0', behavior: 'smooth'})
-        if (!userID) nav('/login')
-    }, [feature, userID, nav])
+        if (!userID) {
+            const next = encodeURIComponent(location.pathname + location.search + location.hash)
+            nav(`/login?next=${next}`)
+        }
+    }, [feature, userID, nav, location.pathname, location.search, location.hash])
+    const { showToast } = useToast()
     const getUserInfor = useCallback(async ()=>{
         const response = await getInfor()
         if (response.status != 201){
-            alert(response.message)
+            showToast(response.message || 'Lỗi khi tải thông tin người dùng', 'error')
             nav('/')
             return
         }
         setLoading(false)
-        setUserData(response.data)
-    }, [nav])
+        // Prefill with social data if present (after social OAuth login)
+        const prefills = {}
+        const socialName = sessionStorage.getItem('social_name')
+        const socialEmail = sessionStorage.getItem('social_email')
+        const socialAvatar = sessionStorage.getItem('social_avatar')
+        if (socialName && (!response.data.name || response.data.name.trim() === '')) prefills.name = socialName
+        if (socialEmail && (!response.data.email || response.data.email.trim() === '')) prefills.email = socialEmail
+        if (socialAvatar && (!response.data.avatar || response.data.avatar.trim() === '')) prefills.avatar = socialAvatar
+        const merged = { ...response.data, ...prefills }
+        setUserData(merged)
+    }, [nav, showToast])
     const getOrderList = useCallback(async ()=>{
         const res = await getOrder()
         if (res.status != 201){
-            alert(res.message)
+            showToast(res.message || 'Lỗi khi lấy đơn hàng', 'error')
             return
         }
         setLoading(false)
         setOrderList(res.data.reverse())
-    }, [])
+    }, [showToast])
     useEffect(()=>{
+        const userInfoBoards = ['profile', 'bank', 'address', 'notifications-settings', 'privacy', 'notifications', 'vouchers']
         setLoading(true)
-        setUserID(sessionStorage.getItem("userID"))
-        if (feature == 'profile') getUserInfor()
+        setUserID(localStorage.getItem('userID') || sessionStorage.getItem("userID"))
+        if (userInfoBoards.includes(feature)) getUserInfor()
         if (feature == 'order') getOrderList()
+        else setLoading(false)
     },[feature, userID, getUserInfor, getOrderList])
+
+    // Persist helper: called when subpages update user data
+    const persistUserData = async (nextUserData) => {
+        setUserData(nextUserData)
+        try{
+            const res = await updateInfor(nextUserData)
+            if (res && (res.status == 201 || res.status === '201')){
+                setSaveMessage({ type: 'success', text: res.message || 'Lưu thông tin thành công' })
+                setTimeout(()=> setSaveMessage(null), 3000)
+            } else {
+                setSaveMessage({ type: 'error', text: res?.message || 'Lưu thất bại' })
+                setTimeout(()=> setSaveMessage(null), 3000)
+                console.error('Failed to persist user data', res)
+            }
+        }catch(e){ console.error('persistUserData error', e) }
+    }
     const handleReBuy = () => {
         // TODO: Implement re-buy functionality
-        alert('Chức năng mua lại chưa được triển khai');
+        showToast('Chức năng mua lại chưa được triển khai', 'info');
     }
 
     const handleChangeUserData = (key, value) => {
         if (key == 'avatar'){
             var maxSizeInBytes = 1 * 1024 * 1024; 
             if (value.size > maxSizeInBytes) {
-                alert("Vui lòng chọn hình ảnh nhỏ hơn 1MB")
+                showToast("Vui lòng chọn hình ảnh nhỏ hơn 1MB", 'error')
                 return
             }
             var reader = new FileReader();
@@ -68,39 +110,52 @@ const UserPage = ()=>{
     async function handleSaveInfor (e){
         e.preventDefault()
         const res = await updateInfor(userData)
-        alert(res.message)
+        if (res && (res.status == 201 || res.status === '201')){
+            setSaveMessage({ type: 'success', text: res.message || 'Lưu thông tin thành công' })
+            setTimeout(()=> setSaveMessage(null), 3000)
+        } else {
+            setSaveMessage({ type: 'error', text: res?.message || 'Lưu thất bại' })
+            setTimeout(()=> setSaveMessage(null), 3000)
+        }
+        // If update succeeded, clear temporary social prefill data
+        if (res && (res.status == 201 || res.status == '201')){
+            try{
+                sessionStorage.removeItem('social_name')
+                sessionStorage.removeItem('social_email')
+                sessionStorage.removeItem('social_avatar')
+            } catch(e){ console.warn(e) }
+            setShowSocialBanner(false)
+        }
     }
     return(
         <main className="userpage">
             <aside className="sidebar">
                 <div className="sidebar_avt">
-                    <img src={userData?.avatar} alt="avt" className="sidebar_avt_img" />
+                    <img src={userData?.avatar || '/ava.svg'} alt="avt" className="sidebar_avt_img" />
                     <div className="sidebar_avt_username">
                         <p>{userData?.username}</p>
-                    <p onClick={()=>nav('/user/profile')} >Sửa hồ sơ</p>
+                    <Link to="/user/profile">Sửa hồ sơ</Link>
                     </div>
                 </div>
                 <nav className="sidebar_nav">
                     <ul>
-                        <li onClick={()=>nav('/user/profile')} >Tài khoản của tôi</li>
+                        <li><Link to="/user/profile">Tài khoản của tôi</Link></li>
                         <ul className="sidebar_nav_list">
-                            <li onClick={()=>nav('/user/profile')} >Hồ sơ</li>
-                            <li>Ngân Hàng</li>
-                            <li>Địa Chỉ</li>
-                            <li>Đổi Mật Khẩu</li>
-                            <li>Cài Đặt Thông Báo</li>
-                            <li>Những  Thiết Lập Riêng Tư</li>
+                            <li><Link to="/user/profile">Hồ sơ</Link></li>
+                            <li><Link to="/user/bank">Ngân Hàng</Link></li>
+                            <li><Link to="/user/address">Địa Chỉ</Link></li>
+                            <li><Link to="/user/change-password">Đổi Mật Khẩu</Link></li>
+                            <li><Link to="/user/notifications-settings">Cài Đặt Thông Báo</Link></li>
+                            <li><Link to="/user/privacy">Những  Thiết Lập Riêng Tư</Link></li>
                         </ul>
-                        <li onClick={()=>nav('/user/order')} >Đơn Mua</li>
-                        <li>Thông báo</li>
-                        <li>Kho Voucher</li>
+                        <li><Link to="/user/order">Đơn Mua</Link></li>
+                        <li><Link to="/user/notifications">Thông báo</Link></li>
+                        <li><Link to="/user/vouchers">Kho Voucher</Link></li>
                     </ul>
                 </nav>
             </aside>
             <section className="board">
-                {
-                    loading && <div className="order" style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>Loading...</div>
-                }
+                {/* Loading state is now non-blocking; components render and handle missing data */}
                 {
                     board === 'profile' && 
                     !loading &&
@@ -109,12 +164,21 @@ const UserPage = ()=>{
                             <p>Hồ Sơ Của Tôi</p>
                             <p>Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
                         </div>
+                        {
+                            (showSocialBanner && (sessionStorage.getItem('social_name') || sessionStorage.getItem('social_email'))) &&
+                            <div className="social-prefill-banner">
+                                <p>Chúng tôi đã điền thông tin từ tài khoản xã hội của bạn. Vui lòng kiểm tra và nhấn "Lưu" để cập nhật.</p>
+                                <div style={{display:'flex', gap:8}}>
+                                    <button className="btn" onClick={()=>setShowSocialBanner(false)}>Đóng</button>
+                                </div>
+                            </div>
+                        }
                         <form className="profile_form" onSubmit={handleSaveInfor}>
                             <div className="label-list">
                                 <label htmlFor="username">Tên đăng nhập</label>
                                 <label htmlFor="name">Tên</label>
                                 <label htmlFor="email">Email</label>
-                                <label htmlFor="phone">Sô điện thoại</label>
+                                <label htmlFor="phone" className="required">Sô điện thoại</label>
                                 <label htmlFor="birthday">Ngày sinh</label>
                                 <label htmlFor="sex">Giới tính</label>
                             </div>
@@ -135,14 +199,36 @@ const UserPage = ()=>{
                                 <button className="infor_list_btn pointer">Lưu</button>
                             </div>
                             <div className="infor_avt">
-                                <div className="infor_avt_img" style={{backgroundImage: `url(${userData?.avatar})`}}></div>
+                                <div className="infor_avt_img" style={{backgroundImage: `url(${userData?.avatar || '/ava.svg'})`}}></div>
                                 <input type="file" name="avt" id="avt" onChange={(e)=>handleChangeUserData('avatar', e.target.files[0])} />
-                                <label htmlFor="avt">Chọn Ảnh</label>
+                                <label htmlFor="avt" className="edit-avatar-btn">Chọn Ảnh</label>
                                 <p>Dung lượng file tối đa 1MB <br /> Định dạng: JPEG, PNG</p>
                             </div>
+                            {saveMessage && <div className={`save-toast ${saveMessage.type}`}>{saveMessage.text}</div>}
                         </form>
                     </div>
                 }
+                    {
+                        board === 'bank' && <Bank userData={userData} onUpdate={(next)=>persistUserData(next)} />
+                    }
+                    {
+                        board === 'address' && <Address userData={userData} onUpdate={(next)=>persistUserData(next)} />
+                    }
+                    {
+                        board === 'change-password' && <ChangePassword onChangePassword={(p)=>console.log('change password', p)} />
+                    }
+                    {
+                        board === 'notifications-settings' && <NotificationsSettings userData={userData} onUpdate={(next)=>persistUserData(next)} />
+                    }
+                    {
+                        board === 'privacy' && <PrivacySettings userData={userData} onUpdate={(next)=>persistUserData(next)} />
+                    }
+                    {
+                        board === 'notifications' && <Notifications userData={userData} />
+                    }
+                    {
+                        board === 'vouchers' && <Vouchers userData={userData} onUpdate={(next)=>persistUserData(next)} />
+                    }
                 {
                     board === 'order' &&
                     !loading &&
@@ -194,7 +280,7 @@ const UserPage = ()=>{
                                                     {
                                                         order.orderStatus === "pending" && <div className="btn bg-black">Hủy đơn</div>
                                                     }
-                                                    <div className="btn" onClick={()=> nav('/contacts')}>Liên hệ người bán</div>
+                                                    <Link to="/contacts" className="btn">Liên hệ người bán</Link>
                                                 </div>
                                             </div>
                                         </div>

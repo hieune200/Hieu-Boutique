@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { hotProductsList } from '../../services/products.api';
 import Productcard from '../../components/ProductCard';
 import './homepageStyle/HotProducts.scss'
@@ -16,20 +17,33 @@ const HotProducts = () => {
         }
         getHotProd()
     },[])
+    const preview = hotProd?.slice(0,4) || [];
+
     return(
         <section className="hotproducts">
             <h2 className="section-title">Sản phẩm nổi bật</h2>
             <div className="hotproducts_list">
                 {
-                    hotProd?.map((product, index)=>{
+                    preview.map((product, index)=>{
                         return(
                             <Productcard id={product} key={index}/>
                         )
                     })
                 }
             </div>
+            {hotProd && hotProd.length > 4 && (
+                <>
+                    <div className="hotproducts_footer">
+                        <Link className="hotproducts_viewall" to="/collections/hot-products" aria-label="Xem tất cả">
+                            <span>Xem tất cả</span>
+                        </Link>
+                    </div>
+
+                    {/* banner removed from hot products - moved to a separate season collection section */}
+                </>
+            )}
         </section>
     )
 }
 
-export default HotProducts;
+export default HotProducts

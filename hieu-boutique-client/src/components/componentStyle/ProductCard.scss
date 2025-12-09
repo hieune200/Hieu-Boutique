@@ -1,30 +1,277 @@
+/* Cleaned ProductCard.scss
+     Restores stable styling for product cards and quick-add modal.
+     - Card height reduced to ~2/3
+     - Discount badge is red
+     - Hover overlay and centered quick-add button
+     - Modal styles for QuickAddPanel
+     - Swatch visuals with white inner dot + red active ring
+*/
+
 .productcard{
     flex: 1 1 0;
     position: relative;
-    min-height: 400px;
-    padding: 5px 5px 20px;
-    border-radius: 14.5px;
+    /* reduced overall card length to ~2/3 of original */
+    min-height: 280px; /* example: 420px * 2/3 = 280px */
+    padding: 12px;
+    border-radius: 12px;
+    background: #fff;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    transition: box-shadow .18s ease, transform .12s ease;
+
     &:hover{
-        transition: all .2s linear;
-        box-shadow: 0 0 5px 0 #00000035;
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.06);
     }
-    img{
-        aspect-ratio: 35/53;
+
+    .badge.store-only{
+        position: absolute;
+        left: 12px;
+        top: 12px;
+        background: #ffecee;
+        color: #b93b3b;
+        padding: 6px 10px;
+        border-radius: 10px;
+        font-size: 13px;
+        z-index: 4;
+    }
+
+    .discount-circle{
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        background: #d32f2f;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        z-index: 4;
+        font-size: 14px;
+    }
+
+    .img-wrap{
         width: 100%;
-        border-radius: 12px;
-    }
-    .title{
-        text-align: center;
-        margin: 20px 20px 0;
-        font-size: 18px;
-        color: rgb(62, 62, 62);
-        height: 52px;
-        line-height: 26px;
+        border-radius: 8px;
         overflow: hidden;
+        background: #fafafa;
+        position: relative;
+
+        /* overlay that darkens the image on hover */
+        &::before{
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.32);
+            opacity: 0;
+            transition: opacity .18s ease;
+            z-index: 3;
+            pointer-events: none;
+        }
     }
-    .price{
-        text-align: center;
-        margin-bottom: 0;
+
+    img{
+        display: block;
+        width: 100%;
+        /* reduce image height to ~2/3 of a typical 300px image */
+        height: 200px;
+        object-fit: cover;
     }
+
+    /* Quick-add centered overlay button */
+    .quick-add{
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%,-50%) scale(.98);
+        background: #b71c1c; /* red button background */
+        color: #fff;
+        padding: 8px 12px; /* slimmed */
+        border-radius: 8px;
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        min-width: 120px; /* encourage horizontal layout */
+        box-shadow: 0 8px 16px rgba(0,0,0,0.14);
+        cursor: pointer;
+        z-index: 6;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .18s ease, transform .18s ease;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .quick-add.disabled{
+        background: #9e9e9e; /* muted gray */
+        box-shadow: none;
+        opacity: 0.95;
+        cursor: not-allowed;
+    }
+
+    /* show overlay + quick-add when hovering the card */
+    &:hover{
+        .img-wrap::before{ opacity: 1; }
+        .quick-add{ opacity: 1; pointer-events: auto; transform: translate(-50%,-50%) scale(1); }
+    }
+
+    .swatches{
+        display:flex;
+        gap:6px;
+        margin: 8px 0 0;
+        justify-content: center; /* centered thumbnails */
+        align-items: center;
+    }
+
+    .swatch{
+        width:28px;
+        height:28px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.08);
+        padding:1px;
+        background:#fff;
+
+        img{width:100%;height:100%;object-fit:cover}
+    }
+
+    .meta{
+        padding: 12px 6px 6px;
+        flex:1 1 auto;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+    }
+
+    .meta-top{
+        display:flex;
+        justify-content:flex-start;
+        align-items:center;
+        gap:8px;
+        margin-bottom:6px;
+    }
+
+    .rating-row{
+        margin-bottom:6px;
+        display:flex;
+        align-items:center;
+    }
+
+    .prod-code{
+        color:#777;
+        font-size:13px;
+        font-weight:600;
+        white-space:nowrap;
+        margin-left:12px;
+        align-self:flex-start;
+    }
+
+    /* make the title occupy remaining space and keep code pinned to right */
+    .title-inline{ display:block; flex:1 1 auto }
+
+    /* rating: yellow, star on right, rating block aligned left */
+    .rating{
+        font-size:14px;
+        color:#f5c518;
+        margin-bottom:0;
+        display:flex;
+        align-items:center;
+        gap:6px;
+        align-self:flex-start;
+    }
+    .rating .star{ order: initial; color:#f5c518; font-size:16px }
+
+    /* Inline title placed to the right of the star */
+    .title-inline{
+        display:inline-block;
+        font-size:16px;
+        color:#222;
+        font-weight:700;
+        line-height:1.2;
+        margin-left:4px;
+        max-width: calc(100% - 40px);
+        /* allow wrapping instead of truncating with ellipsis */
+        white-space: normal;
+        overflow: visible;
+        word-break: break-word;
+    }
+
+    .title{
+        font-size:16px;
+        color:#222;
+        margin: 6px 0 6px;
+        line-height:1.25;
+        /* allow title to take normal height and wrap so full text is visible */
+        height:auto;
+        overflow:visible;
+        white-space:normal;
+        word-break:break-word;
+    }
+
+    /* responsive: stack the meta-top on narrow screens so code moves below title */
+    @media (max-width: 480px){
+        .meta-top{ flex-direction:column; align-items:flex-start }
+        .prod-code{ margin-left:0; margin-top:6px }
+        .title-inline{ width:100% }
+    }
+
+    .price-row{ display:flex; gap:10px; align-items:center; margin-top:4px }
+    .price{ font-weight:700; color:#c60b0b; font-size:18px }
+    .original{ color:#999; text-decoration:line-through; font-size:13px; margin-left:6px }
+    .sold{ color:#777; font-size:13px; margin-top:8px }
+
+    /* quick-add inner text + icon layout */
+    .quick-add img{ width:18px; height:18px }
+    .quick-add .quick-add-text{ white-space:nowrap; display:inline-block; margin-left:6px }
 }
+
+/* QuickAddPanel / centered product modal styles */
+.quickadd-panel{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:9998 }
+.quickadd-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,0.45); }
+.quickadd-inner{ position:relative; background:#fff; width:86%; max-width:1200px; border-radius:10px; padding:28px; box-shadow:0 20px 40px rgba(0,0,0,0.35); z-index:9999; display:block }
+.quickadd-close{ position:absolute; right:18px; top:14px; background:transparent;border:0;font-size:20px;cursor:pointer;color:#333 }
+.quickadd-grid{ display:flex; gap:28px; align-items:flex-start }
+.quickadd-image{ flex:0 0 48%; background:#f4f4f4; border-radius:6px; padding:18px; display:flex; align-items:center; justify-content:center; position:relative }
+.quickadd-image img{ width:100%; height:auto; max-height:520px; object-fit:contain; display:block }
+
+/* arrow buttons overlaying the image */
+.quickadd-image .qa-arrow{ position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.08); border:0; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer }
+.quickadd-image .qa-prev{ left:12px }
+.quickadd-image .qa-next{ right:12px }
+.quickadd-details{ flex:1 1 52%; padding:8px 6px }
+.qa-title{ font-size:28px; margin:0 0 12px; color:#111 }
+.qa-price{ font-size:22px; color:#b71c1c; font-weight:700; margin-bottom:10px }
+.qa-price .qa-old{ color:#999; text-decoration:line-through; margin-left:10px; font-weight:400 }
+.qa-actions{ margin-top:20px; display:flex; gap:14px; align-items:center }
+.qa-add, .qa-buy{ border-radius:8px; padding:12px 18px; font-weight:600; cursor:pointer; border:1px solid rgba(0,0,0,0.08) }
+.qa-add{ background:#b71c1c;color:#fff;border-color:#b71c1c; display:inline-flex; align-items:center; gap:8px }
+.qa-add img{ width:18px; height:18px }
+.qa-buy{ background:transparent;color:#b71c1c }
+.quickadd-inner .qa-actions .qa-add:active{ transform:translateY(1px) }
+
+/* sizes and swatches styling inside modal */
+.quickadd-details .swatch{ width:34px; height:34px; padding:2px }
+.quickadd-details .swatch img{ width:100%; height:100%; object-fit:cover }
+.quickadd-details .swatch.active{ box-shadow: 0 0 0 3px rgba(183,28,28,0.08); border-color:#b71c1c }
+.quickadd-details .size-btn{ background:#efefef; border:1px solid #ddd }
+.quickadd-details .size-btn.active{ background:#111; color:#fff; border-color:#111 }
+.quickadd-details .qty-box button{ width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center }
+
+/* color swatches inside modal */
+.qa-colors{ margin-top:6px }
+.qa-colors .color-swatch{ width:32px; height:32px; border-radius:50%; padding:4px; display:inline-flex; align-items:center; justify-content:center; background:transparent; border:1px solid rgba(0,0,0,0.04) }
+.qa-colors .color-swatch .color-dot{ width:12px; height:12px; border-radius:50%; display:block; background:#fff }
+.qa-colors .color-swatch img{ width:100%; height:100%; object-fit:cover; border-radius:50% }
+.qa-colors .color-swatch.active{ box-shadow: 0 0 0 4px #fff, 0 0 0 8px #b71c1c; border-color:transparent }
+.qa-colors .color-swatch.active .color-dot{ box-shadow: 0 0 0 1px rgba(0,0,0,0.06) }
+
+/* color item layout: center button and label */
+.qa-colors .color-item{ display:flex; flex-direction:column; align-items:center; gap:6px }
+.qa-colors .color-name{ font-size:12px; color:#222; margin-top:6px; text-align:center }

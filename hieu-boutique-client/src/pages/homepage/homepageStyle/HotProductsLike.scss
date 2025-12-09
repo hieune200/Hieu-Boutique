@@ -1,0 +1,30 @@
+.hotproducts.mini{
+    width:100%;
+    .hotproducts_header{width:1200px;margin:14px auto 0}
+    .section-title{font-size:28px;text-align:center;margin:16px 0}
+    .hotproducts_list{width:1200px;margin:12px auto 36px;display:flex;justify-content:space-between;gap:2%}
+}
+
+/* Combined tab container */
+.combined-hot{
+    width:100%;
+    .combined-header{width:1200px;margin:24px auto 6px;display:flex;align-items:center;justify-content:center;gap:18px}
+    .combined-header .tab{cursor:pointer;font-size:28px;padding:6px 8px;color:#111}
+    .combined-header .divider{width:1px;height:36px;background:#ddd}
+    input[type="radio"]{display:none}
+    /* hide internal mini headers */
+    .hotproducts.mini .hotproducts_header{display:none}
+
+    .combined-lists{width:100%}
+    .combined-lists .list{display:none}
+    /* default show best */
+    #tab-best:checked ~ .combined-lists .best{display:block}
+    #tab-best:checked ~ .combined-header label[for="tab-best"],
+    #tab-discount:checked ~ .combined-header label[for="tab-discount"]{
+        font-weight:700
+    }
+    /* show discount when selected */
+    #tab-discount:checked ~ .combined-lists .discount{display:block}
+    /* ensure lists share same inner layout */
+    .combined-lists .list .hotproducts_list{margin-top:12px}
+}

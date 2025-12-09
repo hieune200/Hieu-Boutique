@@ -10,27 +10,42 @@
             padding: 10px;
             width: 100%;
             border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform .18s ease, box-shadow .18s ease;
             &:hover{
-                box-shadow: 0 0 5px 0 #00000035;
+                transform: translateY(-6px);
+                box-shadow: 0 8px 24px rgba(0,0,0,0.08);
             }
             &_img{
                 width: 100%;
+                display:flex;
+                justify-content:center;
                 img{
-                    margin: 5%;
-                    width: 90%;
-                    border-radius: 6px;
+                    width: 85%; /* slightly smaller */
+                    max-height: 260px;
+                    object-fit: cover;
+                    border-radius: 8px;
+                    transition: transform .28s ease, filter .28s ease;
+                }
+                &:hover img{
+                    transform: scale(1.04);
+                    filter: saturate(1.03) contrast(1.02);
                 }
             }
             .title, .des{
                 box-sizing: unset;
                 margin: 0 5% 5px;
-                padding-top: 5px;
+                padding-top: 8px;
             }
             .title{
-                line-height: 18px;
-                height: 40px;
+                line-height: 20px;
+                height: 46px;
                 overflow: hidden;
+                font-weight: 800;
+                font-size: 16px;
             }
+            .des{ color: #666; height:40px; overflow:hidden }
         }
     }
 }

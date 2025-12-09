@@ -1,0 +1,137 @@
+.news-detail{
+    /* shared tokens (kept in sync with newspage styles) */
+    --card-shadow: 0 10px 28px rgba(17,24,39,0.06);
+    --card-hover-shadow: 0 18px 40px rgba(17,24,39,0.09);
+    --brand-accent: #d32f2f;
+
+    padding: 36px 0;
+    .container{
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 18px;
+        .back{ display:inline-block; margin-bottom:12px; color:#444; text-decoration:none }
+        .nd-title{ font-size:28px; font-weight:800; margin: 10px 0 6px }
+        .nd-short{ color:#555; margin-bottom:12px }
+        .grid{ display:grid; grid-template-columns: 1fr 320px; gap:28px; align-items:start }
+        .nd-img{ img{ width:100%; max-width:520px; border-radius:10px; box-shadow:var(--card-shadow); object-fit:cover; max-height:420px; transition: transform .28s cubic-bezier(.2,.9,.2,1); will-change: transform }}
+        .nd-content{ margin-top:18px; line-height:1.9; color:#222; font-size:16px; p{ margin-bottom:14px }}
+    }
+}
+
+.not-found{ padding:60px; text-align:center }
+
+/* breadcrumb + meta + share */
+.breadcrumb{ color:#666; margin-bottom:12px; a{ color:#666; text-decoration:none; &:hover{ text-decoration:underline } } span{ margin:0 8px; color:#999 } }
+.detail-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap }
+.meta-share{ display:flex; align-items:center; gap:14px }
+.meta{ color:#666; font-size:14px; display:flex; align-items:center; gap:8px; .author{ font-weight:700 } .date{ color:#888 } }
+.share{ display:flex; gap:8px }
+.share-btn{ background:transparent; border:1px solid #eee; padding:8px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:transform .12s ease, box-shadow .12s ease }
+.share-btn:hover{ transform: translateY(-3px); box-shadow: var(--card-hover-shadow) }
+
+@media (max-width: 800px){
+    .news-detail .container{ padding: 0 16px }
+    .detail-header{ flex-direction:column; align-items:flex-start }
+    .news-detail .container .grid{ grid-template-columns: 1fr; }
+}
+
+/* Related sidebar */
+.nd-sidebar{ background:transparent; padding-top:6px }
+.related-title{ font-size:16px; font-weight:700; margin-bottom:12px }
+.related-list{ display:flex; flex-direction:column; gap:12px }
+.related-item{ display:flex; gap:12px; align-items:flex-start; text-decoration:none; color:inherit; padding:8px; border-radius:8px; background:#fff; box-shadow: 0 6px 18px rgba(2,6,23,0.04); transition: transform .18s cubic-bezier(.2,.9,.2,1), box-shadow .18s ease }
+.related-item:hover{ transform: translateY(-6px); box-shadow: var(--card-hover-shadow) }
+.ri-thumb{ width:120px; height:76px; overflow:hidden; flex:0 0 120px; border-radius:8px; img{ width:100%; height:100%; object-fit:cover; transition: transform .28s cubic-bezier(.2,.9,.2,1); will-change: transform }}
+.related-item:hover .ri-thumb img{ transform: scale(1.06) }
+.ri-info{ flex:1; 
+    .ri-title{ font-size:14px; font-weight:700; margin:0 0 6px; display:block; overflow:visible; white-space:normal }
+    .ri-short{ font-size:13px; color:#666; margin:0; display:block; overflow:visible; white-space:normal }
+}
+
+/* Article content typography & utilities */
+.nd-content{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    color:#222;
+    font-size:16px;
+    line-height:1.9;
+}
+.nd-content h2{ font-size:20px; margin:22px 0 10px; font-weight:700; color:#111 }
+.nd-content h3{ font-size:18px; margin:18px 0 8px; font-weight:700; color:#222 }
+.nd-content p{ margin:0 0 14px; color: #333 }
+.nd-content a{ color: var(--brand-red-light, #d32f2f); text-decoration:underline; transition:opacity .12s ease }
+.nd-content a:hover{ opacity:0.85 }
+.nd-content ul, .nd-content ol{ margin: 0 0 14px 18px }
+.nd-content li{ margin:6px 0 }
+
+/* Images & figures inside article */
+.nd-content img{ max-width:100%; height:auto; display:block; margin:14px auto; border-radius:8px }
+.nd-content figure{ margin:14px 0; text-align:center }
+.nd-content figcaption{ font-size:13px; color:#777; margin-top:6px }
+
+/* Blockquote styling */
+.nd-content blockquote{ border-left:4px solid rgba(0,0,0,0.06); padding:12px 16px; background:#fafafa; color:#333; margin:18px 0; border-radius:6px; font-style:italic }
+
+/* Pull-quote / highlighted lead */
+.nd-content .pull-quote{ font-size:18px; font-weight:700; color:#2b2b2b; margin:18px 0; padding:12px 16px; background:linear-gradient(90deg,#fff7f7,#fff); border-radius:8px }
+
+/* Code blocks and inline code */
+.nd-content pre{ background:#0f1724; color:#e6edf3; padding:12px; border-radius:8px; overflow:auto; font-family: 'Courier New', Courier, monospace; font-size:13px }
+.nd-content code{ background:#f4f6f8; padding:2px 6px; border-radius:6px; font-family: 'Courier New', monospace; font-size:13px }
+
+/* Nice first-letter drop cap for the first paragraph */
+.nd-content p:first-of-type::first-letter{ font-size:48px; font-weight:700; float:left; line-height:1; margin-right:10px; color:var(--brand-red-light,#d32f2f) }
+
+/* Tables inside content */
+.nd-content table{ width:100%; border-collapse:collapse; margin:14px 0 }
+.nd-content th, .nd-content td{ border:1px solid #eee; padding:8px; text-align:left }
+
+/* Responsive adjustments */
+@media (max-width: 900px){
+    .nd-content h2{ font-size:18px }
+    .nd-content h3{ font-size:16px }
+    .nd-content p{ font-size:15px }
+}
+
+/* Comments */
+.comments{ margin-top:26px; border-top:1px solid #f0f0f0; padding-top:20px }
+.comments-title{ font-size:16px; font-weight:700; margin-bottom:12px }
+.comment-form{ display:flex; flex-direction:column; gap:10px }
+.comment-form input[type="text"], .comment-form textarea{ width:100%; border:1px solid #eee; padding:10px; border-radius:8px; font-size:14px; resize:vertical }
+.cf-actions{ display:flex; justify-content:flex-end }
+.btn-submit{ background:var(--brand-red-light,#d32f2f); color:#fff; padding:8px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:700 }
+.btn-submit:hover{ opacity:0.95 }
+.comment-list{ margin-top:16px; display:flex; flex-direction:column; gap:12px }
+.no-comments{ color:#666 }
+.comment-item{ background:#fff; border:1px solid #f3f3f3; padding:12px; border-radius:8px; position:relative }
+.ci-meta{ font-size:13px; color:#444; margin-bottom:6px; display:flex; gap:8px; align-items:center }
+.ci-name{ font-weight:700; margin-right:8px }
+.ci-date{ color:#888; font-size:12px }
+.ci-body{ color:#222; font-size:15px; line-height:1.6 }
+.ci-delete{ position:absolute; right:10px; top:10px; background:transparent; border:none; color:#b71c1c; cursor:pointer; font-size:12px }
+
+/* avatar + actions */
+.ci-avatar{ width:40px; height:40px; border-radius:50%; background:#f1f1f1; display:inline-flex; align-items:center; justify-content:center; font-weight:700; color:#b71c1c; margin-right:10px }
+.ci-actions{ position:absolute; right:10px; top:10px }
+.ci-report{ background:transparent; border:none; color:#d67; cursor:pointer; font-size:12px }
+.comment-item.reported{ opacity:0.6; border-color:#ffe6e6 }
+
+@media (max-width: 900px){
+    .comment-item{ padding:10px }
+}
+
+.comments-locked{ margin-top:26px; padding:18px; border:1px dashed #f0f0f0; border-radius:8px; background:#fffaf9 }
+.comments-locked p{ margin:0; color:#555 }
+.comments-locked a{ color:var(--brand-red-light,#d32f2f); font-weight:700; text-decoration:underline }
+
+/* Login modal */
+.login-modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; z-index:2000 }
+.login-modal{ background:#fff; padding:18px; border-radius:12px; width:420px; max-width:92%; box-shadow:0 12px 40px rgba(0,0,0,0.18); position:relative }
+.login-modal h3{ margin:0 0 12px }
+.login-modal-form{ display:flex; flex-direction:column; gap:10px }
+.login-modal-form input{ padding:10px; border:1px solid #eee; border-radius:8px }
+.login-modal-close{ position:absolute; right:8px; top:6px; background:transparent; border:none; font-size:20px; cursor:pointer }
+.btn-secondary{ background:#f3f3f3; border:none; padding:8px 12px; border-radius:8px; cursor:pointer }
+
+.comment-cta textarea{ width:100%; min-height:84px; border-radius:8px; border:1px solid #eee; padding:12px; resize:vertical }
+.comment-cta .btn-secondary{ padding:8px 10px }
+

@@ -1,38 +1,92 @@
 .contactspage{
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 16px;
     display: grid;
-    grid-template-columns: 400px 760px;
-    gap: 40px;
-    width: 1200px;
-    margin: 60px auto;
+    grid-template-columns: 380px 1fr;
+    gap: 32px;
+
     .infor{
         p{
             font-size: 22px;
             font-weight: 700;
-            margin: 0 0 20px;
+            margin: 0 0 18px;
         }
-        ul{
-            margin: 10px 0;
-            padding: 10px 20px;
-            box-shadow: 0px 0px 1px 1px rgb(203, 203, 203);
-            li{
-                line-height: 40px;
-                &:hover{
-                    text-decoration: underline;
-                    cursor: pointer;
+
+        .info-grid{
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+
+            .info-card{
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                padding: 14px;
+                background: #fff;
+                box-shadow: 0 6px 18px rgba(10,10,10,0.05);
+                border-radius: 12px;
+                transition: transform .14s cubic-bezier(.2,.9,.2,1), box-shadow .14s ease, background-color .12s ease;
+                cursor: pointer;
+                will-change: transform, box-shadow;
+
+                &:hover{ transform: translateY(-4px); box-shadow: 0 12px 28px rgba(10,10,10,0.07); }
+                &:active{ transform: translateY(-1px); }
+                &:focus,
+                &:focus-visible{
+                    outline: none;
+                    box-shadow: 0 0 0 4px rgba(99,102,241,0.10), 0 12px 28px rgba(10,10,10,0.06);
+                }
+
+                .card-media{
+                    width: 64px;
+                    height: 64px;
+                    flex: 0 0 64px;
+                    display:flex; align-items:center; justify-content:center;
+                    img{ width: 56px; height: 56px; object-fit:contain; border-radius: 8px; }
+                    transition: transform .14s ease, color .14s ease;
+                }
+
+                .card-body{
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    h4{ margin:0 0 6px; font-size:17px; line-height:1.15; font-weight:700 }
+                    .short{ margin:0 0 8px; color: #555; font-size:14px; line-height:1.4 }
+                    .btn-link{ display:inline-block; padding:6px 10px; border-radius:6px; background:transparent; color:var(--brand-color, #d6336c); text-decoration:none; font-weight:700; margin-top:6px }
                 }
             }
         }
     }
+
+    /* icon sizing and per-card color variables */
+    .info-card .card-media{ color: var(--icon-color, #0b6); }
+    .contact-icon{ width:72px; height:72px; display:block; transition: transform .18s ease, color .18s ease, opacity .14s ease; }
+    .info-card:hover .contact-icon,
+    .info-card:focus .contact-icon,
+    .info-card:focus-visible .contact-icon{ transform: scale(1.06); opacity: 0.98 }
+    .info-card--about{ --icon-color: #d6336c }
+    .info-card--order{ --icon-color: #0b6b3a }
+    .info-card--vip{ --icon-color: #b06bff }
+    .info-card--loyalty{ --icon-color: #0b6b3a }
+    .info-card--returns{ --icon-color: #0b6b3a }
+    .info-card--warranty{ --icon-color: #0b6b3a }
+    .info-card--privacy{ --icon-color: #1f6feb }
+    .info-card--faq{ --icon-color: #f39c12 }
+    .info-card--payment{ --icon-color: #b91c1c }
+    .info-card--contact{ --icon-color: #0b6 }
+
     .shop-link{
-        p{
-            margin: 10px 0;
-            a{color: black;}
-        }
-        .shop-title{
-            margin: 10px 0 20px;
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: 1px;
-        }
+        p{ margin: 10px 0; a{ color: black } }
+        .shop-title{ margin: 10px 0 20px; font-size: 15px; font-weight: 500; letter-spacing: 0.2px; color: #333; line-height:1.6 }
+        .shop-links-list{ margin-top:12px; ul{ margin:6px 0 12px 18px; li{ margin:6px 0 } } }
+        .shop-gallery{ display:grid; grid-template-columns: 1fr; gap:10px; margin: 12px 0; figure{ display:flex; gap:12px; align-items:center; margin:0; background:#fff; padding:10px; border-radius:8px; box-shadow: 0 8px 18px rgba(10,10,10,0.04); img{ width:84px; height:84px; object-fit:cover; border-radius:8px } figcaption{ font-weight:600; color:#222; } } }
+    }
+
+    @media (max-width: 900px){
+        grid-template-columns: 1fr;
+        .infor{ order: 2 }
+        .shop-link{ order: 1 }
+        .infor .info-grid .info-card{ align-items:center }
     }
 }

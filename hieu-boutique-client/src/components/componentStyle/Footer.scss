@@ -1,58 +1,154 @@
 .footer{
+    width: 100%;
+    background: #ffffff;
+    color: var(--brand-dark, #111217);
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    &_top{
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 calc(50% - 600px);
-        height: 80px;
-        width: 100%;
-        border-top: 1px solid rgba(0, 0, 0, 0.15);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-        &_icon{
-            display: flex;
-            gap: 12px;
-        }
-        img{
-            max-height: 30px;
-            cursor: pointer;
-        }
-    }
-    &_mid{
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        width: 1200px;
-        padding: 30px 0;
-        &>div{
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 33%;   
+    font-family: 'Helvetica Neue', Arial, sans-serif;
 
-        }
-        &>div p{
-            text-align: center;
-        }
-        p{
-            font-size: 14px;
-            width: 350px;
-        }
-        img{
-            margin-top: 12px;
-            height: 40px;
-        }
-    }
-    &_bot{
-        padding: 10px;
+    &__container{
         width: 100%;
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        text-align: center;
-        color: rgba(0, 0, 0, 0.5);
-        font-size: 12px;
-        font-weight: 500;
+        max-width: 1200px;
+        padding: 28px 20px;
+        box-sizing: border-box;
+    }
+
+    &_top{
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 0;
+
+        .footer_top_social{
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .social-btn{
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .social-btn img{ width:18px; height:18px }
+        .social-btn:hover{ transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+
+        .footer_top_logo img{ height: 48px }
+
+        .footer_top_partners{ display:flex; gap:12px; align-items:center }
+        .footer_top_partners img{ height:36px }
+    }
+
+    &_newsletter{
+        width: 100%;
+        display:flex;
+        justify-content:center;
+        padding:22px 16px;
+    
+        .newsletter_card{
+            width:100%;
+            max-width:1200px;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 18px 20px;
+            display:flex;
+            align-items:center;
+            gap:18px;
+            box-shadow: 0 8px 30px rgba(17,18,23,0.06);
+            border: 1px solid rgba(17,18,23,0.04);
+        }
+
+        .newsletter_left{flex:1;display:flex;align-items:center;gap:14px}
+        .newsletter_left h4{ margin:0; font-size:18px; font-weight:700; color:var(--brand-dark)}
+
+        .newsletter_form{ flex:1; display:flex; gap:12px; align-items:center }
+        .newsletter_form input{ flex:1; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,0.06); font-size:15px; min-width:0 }
+        .btn-register{ background: var(--brand-red); color:#fff; border:none; padding:12px 20px; border-radius:12px; font-weight:700; cursor:pointer }
+
+        .newsletter_right{ display:flex; gap:12px; align-items:center }
+        .newsletter_right .social-btn{ width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; background:#fff; border-radius:50%; box-shadow:0 6px 18px rgba(2,2,2,0.04) }
+        .newsletter_right .social-btn img{ width:18px; height:18px }
+    }
+
+    &_mid{
+        width: 100%;
+        max-width:1200px;
+        padding: 28px 20px;
+        display: flex;
+        gap: 28px;
+        box-sizing: border-box;
+        justify-content:space-between;
+
+        &>div{ flex:1; min-width:180px }
+
+        .footer_mid_contacts ul,
+        .footer_mid_company ul,
+        .footer_mid_policy ul{ list-style: none; padding: 0; margin: 10px 0 0 0 }
+
+        .footer_mid_contacts h5,
+        .footer_mid_company h5,
+        .footer_mid_policy h5{ font-size:16px; margin:0 0 10px 0; color:var(--brand-dark) }
+
+        .footer_mid_contacts li{ display:flex; gap:12px; align-items:center; margin:10px 0; color:rgba(17,18,23,0.85) }
+        .footer_mid_contacts .icon{ width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center }
+        .footer_mid_contacts .text{ font-size:14px; color:rgba(17,18,23,0.75) }
+
+        .footer_mid_company ul li, .footer_mid_policy ul li{ margin:8px 0 }
+        .footer_mid_company a, .footer_mid_policy a{ color:rgba(17,18,23,0.72); text-decoration:none; transition: color .12s ease }
+        .footer_mid_company a:hover, .footer_mid_policy a:hover{ color:var(--brand-red) }
+
+        .cert img{ height:44px; margin-top:10px }
+    }
+
+    &_bot{
+        width: 100%;
+        padding: 12px 0 24px 0;
+        text-align:center;
+        color: rgba(17,18,23,0.6);
+        font-size: 13px;
+        border-top: 1px solid rgba(17,18,23,0.04);
+        background: transparent;
+    }
+
+    // responsive
+    @media (max-width: 900px){
+        &_mid{ flex-direction: column; align-items:flex-start }
+        &_newsletter{ flex-direction:column; align-items:center }
+        .newsletter_form{ width:100%; max-width:760px }
+        .newsletter_form input{ max-width:100% }
+        .footer_top_logo img{ height:40px }
+        .social-btn{ width:36px; height:36px }
+    }
+
+}
+
+/* bottom content styling */
+.footer_bot{
+    width:100%;
+    box-sizing:border-box;
+    .footer_bot_content{
+        max-width:1200px;
+        margin:0 auto;
+        padding:12px 20px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+    }
+    .bot_text{ color:rgba(17,18,23,0.6); font-size:13px; line-height:1.5 }
+    .bot_text p{ margin:0 0 6px 0 }
+    .bot_badges{ display:flex; gap:10px; align-items:center }
+    .bot_badges img{ height:36px; opacity:0.95 }
+
+    @media (max-width:700px){
+        .footer_bot_content{ flex-direction:column; align-items:center; text-align:center }
+        .bot_badges{ margin-top:10px }
     }
 }

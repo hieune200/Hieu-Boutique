@@ -1,0 +1,36 @@
+.jacket-section{
+    width: 100%;
+    margin: 18px 0;
+}
+.jacket_inner{
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+.jacket_header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin: 6px 0 12px 0;
+}
+.jacket_heading{
+    font-size: 2.0rem;
+    font-weight: 800;
+    margin: 0;
+}
+.jacket_link{
+    color: var(--brand-red);
+    text-decoration: none;
+    font-weight: 700;
+}
+.jacket_banner{
+    display:block;
+    background: linear-gradient(180deg,#70bff3,#2f93e6);
+    border-radius: 12px;
+    padding: 18px;
+}
+.jacket_banner img{max-width:100%;width:100%;height:auto;border-radius:8px;display:block}
+
+@media (max-width:900px){
+    .jacket_header{flex-direction:column;gap:8px;text-align:center}
+}

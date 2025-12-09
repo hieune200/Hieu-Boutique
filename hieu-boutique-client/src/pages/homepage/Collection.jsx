@@ -1,5 +1,5 @@
 
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import coll1 from '../../assets/imgs/home/coll1.png'
 import coll2 from '../../assets/imgs/home/coll2.png'
@@ -7,11 +7,7 @@ import coll3 from '../../assets/imgs/home/coll3.png'
 import './homepageStyle/Collections.scss'
 
 const Collections = ()=>{
-    const nav = useNavigate()
-
-    const handleGoToUrl = (url)=>{
-        nav(url)
-    }
+    // navigation will be handled with Link
 
     const listColection = [
         {
@@ -39,11 +35,11 @@ const Collections = ()=>{
             {
                 listColection.map((collection, index)=>{
                     return(
-                        <div className="collection pointer" key={`homeCol${index}`} onClick={()=>{handleGoToUrl(collection.url)}} >
+                        <Link to={collection.url} className="collection pointer" key={`homeCol${index}`}>
                             <img src={collection.img} alt="hieu boutique" />
                             <h4 className="title">{collection.title}</h4>
                             <p className="des">{collection.des}</p>
-                        </div>
+                        </Link>
                     )
                 })
             }

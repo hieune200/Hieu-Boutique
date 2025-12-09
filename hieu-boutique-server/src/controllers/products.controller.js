@@ -1,27 +1,103 @@
 import { ObjectId } from "mongodb"
-import { productsCollection, hotProductsCollection } from "../models/mongoClient.model.js"
+import crypto from 'crypto'
+import { ensureConnected, getProductsCollection, getHotProductsCollection, getCollectionsCollection } from "../models/mongoClient.model.js"
+
+// generate a short product code (masanpham) for DB records (crypto-based)
+function generateMasanpham(prefix = 'HB'){
+        try{
+                const code = crypto.randomBytes(4).toString('hex').toUpperCase()
+                return `${prefix}-${code}`
+        }catch(e){
+                try{ return `${prefix}-${new ObjectId().toString().slice(0,8).toUpperCase()}` }catch(err){ return `${prefix}-${Date.now().toString().slice(-8)}` }
+        }
+}
 
 async function productListID (req, res, next){
     try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
         const category = req.params.category
-        let data
-        if (category == 'all'){
-            let list = await productsCollection.find({}).limit(25).project({_id: 1}).toArray().then(res => res.map((product)=> product._id))
-            data = list
-        } else{
-            let list = await productsCollection.find({category: category}).project({_id: 1}).toArray().then(res => res.map((product)=> product._id))
-            data = list
-        }
+            // Build filter from query params (price, discount, colors, size, material)
+            const q = req.query || {}
+            const filter = {}
+            if (category !== 'all') filter.category = category
+
+            // price range: priceMin, priceMax
+            const priceMin = Number(q.priceMin) || null
+            const priceMax = Number(q.priceMax) || null
+            if (priceMin !== null && !isNaN(priceMin)) filter.price = Object.assign({}, filter.price, { $gte: priceMin })
+            if (priceMax !== null && !isNaN(priceMax)) filter.price = Object.assign({}, filter.price, { $lte: priceMax })
+
+            // discount: discountMin, discountMax (assumes product.discount is a number 0-100)
+            const discountMin = Number(q.discountMin) || null
+            const discountMax = Number(q.discountMax) || null
+            if (discountMin !== null && !isNaN(discountMin)) {
+                // support discount field OR implicit discount computed from oldPrice vs price
+                // use $or so documents with a numeric `discount` or those with oldPrice>price meeting the percent threshold match
+                filter.$or = filter.$or || []
+                filter.$or.push({ discount: { $gte: discountMin } })
+                // $expr to compute percentage = ((oldPrice - price) / oldPrice) * 100
+                filter.$or.push({ $expr: { $gte: [ { $multiply: [ { $cond: [ { $and: [ { $gt: ["$oldPrice", 0] }, { $gt: ["$price", 0] } ] }, { $multiply: [ { $divide: [ { $subtract: ["$oldPrice", "$price"] }, "$oldPrice" ] }, 100 ] }, 0 ] }, 1 ] }, discountMin ] } })
+            }
+            if (discountMax !== null && !isNaN(discountMax)) filter.discount = Object.assign({}, filter.discount, { $lte: discountMax })
+
+            // colors: comma separated list -> match any
+            if (q.colors){
+                const colors = String(q.colors).split(',').map(s=> s.trim()).filter(Boolean)
+                if (colors.length) filter.colors = { $in: colors }
+            }
+
+            // size: comma separated list -> match any
+            if (q.sizes){
+                const sizes = String(q.sizes).split(',').map(s=> s.trim()).filter(Boolean)
+                if (sizes.length) filter.size = { $in: sizes }
+            }
+
+            // material: single or comma separated
+            if (q.materials){
+                const materials = String(q.materials).split(',').map(s=> s.trim()).filter(Boolean)
+                if (materials.length) filter.material = { $in: materials }
+            }
+
+            // collections: comma separated (product.collections array contains values)
+            if (q.collections){
+                const cols = String(q.collections).split(',').map(s=> s.trim()).filter(Boolean)
+                if (cols.length) filter.collections = { $in: cols }
+            }
+
+            // perform query with optional pagination
+            let cursor = productsCollection.find(filter).project({_id: 1})
+            const page = Math.max(1, Number(req.query.page) || 1)
+            const limit = Math.max(1, Number(req.query.limit) || 24)
+            const skip = (page - 1) * limit
+            // if no filters and category === 'all' and client did not request page, cap results
+            if (category === 'all' && Object.keys(req.query || {}).length === 0) {
+                cursor = cursor.limit(200)
+            } else {
+                cursor = cursor.skip(skip).limit(limit)
+            }
+            // compute total matching documents for pagination metadata
+            const total = await productsCollection.countDocuments(filter)
+            const list = await cursor.toArray().then(res => res.map((product)=> product._id.toString()))
+            const totalPages = Math.max(1, Math.ceil(total / limit))
+            const data = {
+                page,
+                limit,
+                total,
+                totalPages,
+                items: list
+            }
         req.data = {
             status: "201",
-            message: "get product successfully",
+            message: "Lấy danh sách sản phẩm thành công",
             data: data
         }
     } 
     catch{
         req.data = {
             status: "500",
-            message: "internal Server Error",
+            message: "Lỗi máy chủ nội bộ",
         }
     }
     next()
@@ -29,22 +105,25 @@ async function productListID (req, res, next){
 
 async function productNewListID (req, res, next){
     try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
         let quan = await productsCollection.find({category: "quan"}).limit(3).project({_id: 1}).toArray()
         let ao = await productsCollection.find({category: "ao"}).limit(3).project({_id: 1}).toArray()
         let dam = await productsCollection.find({category: "dam"}).limit(3).project({_id: 1}).toArray()
         let phukien = await productsCollection.find({category: "phukien"}).limit(3).project({_id: 1}).toArray()
         let chanvay = await productsCollection.find({category: "chanvay"}).limit(3).project({_id: 1}).toArray()
-        let data = [quan.map(item=> item._id), ao.map(item=> item._id), dam.map(item=> item._id), phukien.map(item=> item._id), chanvay.map(item=> item._id)]
+        let data = [quan.map(item=> item._id.toString()), ao.map(item=> item._id.toString()), dam.map(item=> item._id.toString()), phukien.map(item=> item._id.toString()), chanvay.map(item=> item._id.toString())]
         req.data = {
             status: "201",
-            message: "get new list product successfully",
+            message: "Lấy danh sách sản phẩm mới thành công",
             data: data
         }
     } 
     catch{
         req.data = {
             status: "500",
-            message: "internal Server Error",
+            message: "Lỗi máy chủ nội bộ",
         }
     }
     next()
@@ -52,18 +131,22 @@ async function productNewListID (req, res, next){
 
 async function productDetail (req, res, next){
     try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
         const id = req.params.id
         let data = await productsCollection.findOne({_id: new ObjectId(id)})
+        if (data && data._id) data._id = data._id.toString()
         req.data = {
             status: "201",
-            message: "get detail of product successfully",
+            message: "Lấy chi tiết sản phẩm thành công",
             data: data
         }
     }
     catch{
         req.data = {
             status: "500",
-            message: "internal Server Error",
+            message: "Lỗi máy chủ nội bộ",
         }
     }
     next()
@@ -71,11 +154,15 @@ async function productDetail (req, res, next){
 
 async function suggestListID (req, res, next){
     try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
         const category = req.params.category
         const id = req.params.id
         let ProductList = await productsCollection.find({category: category}).project({_id: 1}).toArray()
         let data = []
-        let index = ProductList.findIndex(product => product._id == id)
+        // compare string ids
+        let index = ProductList.findIndex(product => product._id.toString() == id)
         while (data.length < 4){
             if (index == ProductList.length - 1) index = 0
             else index++
@@ -83,14 +170,14 @@ async function suggestListID (req, res, next){
         }
         req.data = {
             status: "201",
-            message: "get suggest list successfully",
+            message: "Lấy danh sách gợi ý thành công",
             data: data
         }
     }
     catch{
         req.data = {
             status: "500",
-            message: "internal Server Error",
+            message: "Lỗi máy chủ nội bộ",
         }
     }
     next()
@@ -98,18 +185,21 @@ async function suggestListID (req, res, next){
 
 async function hotProductListID (req, res, next){
     try{
+        await ensureConnected()
+        const hotProductsCollection = getHotProductsCollection()
+        if (!hotProductsCollection) throw new Error('HotProducts collection unavailable')
         let data = await hotProductsCollection.find({}).toArray()
-        let idList = data.map((product)=> product.productId)
+        let idList = data.map((product)=> product.productId.toString())
         req.data = {
             status: "201",
-            message: "get hot list successfully",
+            message: "Lấy danh sách sản phẩm hot thành công",
             data: idList
         }
     }
     catch{
         req.data = {
             status: "500",
-            message: "internal Server Error",
+            message: "Lỗi máy chủ nội bộ",
         }
     }
     next()
@@ -117,29 +207,450 @@ async function hotProductListID (req, res, next){
 
 async function searchListID(req,res,next){
     try{
-        let keyword = req.params.keyword
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        let keyword = req.params.keyword || ''
+        keyword = String(keyword).trim()
+        // if keyword is empty return empty array to avoid returning all products
+        if (!keyword) {
+            req.data = {
+                status: "200",
+                message: "No keyword provided",
+                data: []
+            }
+            return next()
+        }
+        // escape regex special characters to prevent accidental regex injection
+        const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')
+        const re = new RegExp(escapeRegex(keyword), 'i')
         let data = await productsCollection
-                        .find({"title": { "$regex": keyword, "$options": "i" }})
+                        .find({ title: { $regex: re } })
                         .project({
                             _id: 1, 
                             category: 1, 
                             title: 1, 
                             warehouse: 1, 
+                            sold: 1,
                             "img": {"$slice": [0, 1]}})
                         .toArray()
+        // convert ObjectId to string for JSON compatibility
+        data = data.map(d => ({...d, _id: d._id.toString()}))
         req.data = {
             status: "201",
-            message: "get search list successfully",
+            message: "Lấy danh sách sản phẩm tìm kiếm thành công",
             data: data
         }
     }
     catch{
         req.data = {
             status: "500",
-            message: "internal Server Error",
+            message: "Lỗi máy chủ nội bộ",
         }
     }
     next()
 }
 
-export { productListID, productNewListID, productDetail, suggestListID, hotProductListID, searchListID }
+async function collectionProductsID(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        const slug = req.params.slug
+        // find products that contain this collection slug in their `collections` array
+        let list = await productsCollection.find({ collections: slug }).project({_id: 1}).toArray()
+        const data = list.map(p => p._id.toString())
+        req.data = {
+            status: "201",
+            message: "Lấy danh sách sản phẩm theo bộ sưu tập thành công",
+            data: data
+        }
+    }
+    catch(err){
+        console.error('collectionProductsID error', err)
+        req.data = {
+            status: "500",
+            message: "Lỗi máy chủ nội bộ",
+        }
+    }
+    next()
+}
+
+async function collectionInfo(req, res, next){
+    try{
+        await ensureConnected()
+        const collectionsCollection = getCollectionsCollection()
+        if (!collectionsCollection) throw new Error('Collections collection unavailable')
+        const slug = req.params.slug
+        const doc = await collectionsCollection.findOne({ slug })
+        if (doc && doc._id) doc._id = doc._id.toString()
+        req.data = {
+            status: "201",
+            message: "Lấy thông tin bộ sưu tập thành công",
+            data: doc || null
+        }
+    }
+    catch(err){
+        console.error('collectionInfo error', err)
+        req.data = {
+            status: "500",
+            message: "Lỗi máy chủ nội bộ",
+        }
+    }
+    next()
+}
+
+export { productListID, productNewListID, productDetail, suggestListID, hotProductListID, searchListID, collectionProductsID, collectionInfo, catalogInfo, catalogMenu }
+
+// create a new product (admin) — automatically assigns `masanpham` if missing
+async function createProduct(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        const payload = req.body || {}
+        // ensure masanpham exists (and unique)
+        if (!payload.masanpham) payload.masanpham = generateMasanpham()
+        else {
+            // if client supplied masanpham, make sure it's not already used
+            const existing = await productsCollection.findOne({ masanpham: payload.masanpham })
+            if (existing){
+                req.data = { status: '409', message: 'Mã sản phẩm (masanpham) đã tồn tại' }
+                return next()
+            }
+        }
+        // ensure masanpham uniqueness (regenerate if collision)
+        let attempts = 0
+        while (attempts < 6){
+            const conflict = await productsCollection.findOne({ masanpham: payload.masanpham })
+            if (!conflict) break
+            payload.masanpham = generateMasanpham()
+            attempts++
+        }
+        // if still conflict after retries, abort
+        const still = await productsCollection.findOne({ masanpham: payload.masanpham })
+        if (still){
+            req.data = { status: '500', message: 'Không thể tạo mã sản phẩm duy nhất, thử lại sau' }
+            return next()
+        }
+        // optional: prevent accidental duplicate titles
+        if (payload.title){
+            const sameTitle = await productsCollection.findOne({ title: payload.title })
+            if (sameTitle){
+                req.data = { status: '409', message: 'Sản phẩm có tiêu đề trùng lặp đã tồn tại' }
+                return next()
+            }
+        }
+        // ensure timestamps
+        payload.createdAt = payload.createdAt || new Date()
+        payload.updatedAt = new Date()
+        // ensure sold count exists (default 0)
+        payload.sold = Number(payload.sold) || 0
+        const insertRes = await productsCollection.insertOne(payload)
+        const insertedId = insertRes.insertedId
+        const doc = await productsCollection.findOne({_id: insertedId})
+        if (doc && doc._id) doc._id = doc._id.toString()
+        req.data = { status: '201', message: 'Tạo sản phẩm thành công', data: doc }
+    }catch(err){
+        console.error('createProduct error', err)
+        req.data = { status: '500', message: 'Lỗi khi tạo sản phẩm' }
+    }
+    next()
+}
+
+// return distinct categories and collections present in products collection
+async function catalogInfo(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+
+        // distinct categories
+        const categories = await productsCollection.distinct('category')
+
+        // distinct collection slugs from `collections` array field
+        let collections = []
+        try{
+            collections = await productsCollection.distinct('collections')
+            // filter out falsy values
+            collections = Array.isArray(collections) ? collections.filter(Boolean) : []
+        }catch(e){
+            collections = []
+        }
+
+        req.data = {
+            status: '200',
+            message: 'Lấy catalog (categories + collections) thành công',
+            data: { categories, collections }
+        }
+    }
+    catch(err){
+        console.error('catalogInfo error', err)
+        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+    }
+    next()
+}
+
+// return categories with their collections (menu structure)
+async function catalogMenu(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+
+        const pipeline = [
+            { $unwind: { path: "$collections", preserveNullAndEmptyArrays: true } },
+            { $group: { _id: "$category", collections: { $addToSet: "$collections" } } },
+            { $project: { category: "$_id", collections: 1, _id: 0 } }
+        ]
+        const agg = await productsCollection.aggregate(pipeline).toArray()
+        const data = Array.isArray(agg) ? agg.map(item => ({ category: item.category, collections: Array.isArray(item.collections) ? item.collections.filter(Boolean) : [] })) : []
+        req.data = { status: '200', message: 'Lấy menu catalog thành công', data }
+    }
+    catch(err){
+        console.error('catalogMenu error', err)
+        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+    }
+    next()
+}
+
+async function updateProductHighlight(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        const id = req.params.id
+        const payload = req.body || {}
+        const update = {}
+        if (payload.highlight) update.highlight = payload.highlight
+        if (payload.highlights) update.highlights = payload.highlights
+        if (typeof payload.description !== 'undefined') update.description = payload.description
+        if (Object.keys(update).length === 0){
+            req.data = { status: '400', message: 'No highlight payload provided' }
+            return next()
+        }
+        await productsCollection.updateOne({_id: new ObjectId(id)}, { $set: update })
+        const newDoc = await productsCollection.findOne({_id: new ObjectId(id)})
+        if (newDoc && newDoc._id) newDoc._id = newDoc._id.toString()
+        req.data = { status: '200', message: 'Cập nhật highlight thành công', data: newDoc }
+    }
+    catch(err){
+        console.error('updateProductHighlight error', err)
+        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+    }
+    next()
+}
+
+// (exports consolidated at the end of the file)
+
+// single export at top of file already includes all handlers
+
+async function updateProductDetails(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        const id = req.params.id
+        const payload = req.body || {}
+        const update = {}
+        // sizes can be sent as array or comma-separated string
+        if (typeof payload.size !== 'undefined'){
+            if (Array.isArray(payload.size)) update.size = payload.size
+            else if (typeof payload.size === 'string') update.size = payload.size.split(',').map(s=> s.trim()).filter(Boolean)
+        }
+        if (typeof payload.material !== 'undefined') update.material = payload.material
+        if (typeof payload.materials !== 'undefined') update.materials = payload.materials
+        if (typeof payload.color !== 'undefined') update.color = payload.color
+        if (typeof payload.colors !== 'undefined'){
+            if (Array.isArray(payload.colors)) update.colors = payload.colors
+            else if (typeof payload.colors === 'string') update.colors = payload.colors.split(',').map(s=> s.trim()).filter(Boolean)
+        }
+        if (typeof payload.care !== 'undefined') update.care = payload.care
+            // allow marking product as store-only (boolean)
+            if (typeof payload.storeOnly !== 'undefined') update.storeOnly = Boolean(payload.storeOnly)
+
+        if (Object.keys(update).length === 0){
+            req.data = { status: '400', message: 'No detail payload provided' }
+            return next()
+        }
+
+        await productsCollection.updateOne({_id: new ObjectId(id)}, { $set: update })
+        const newDoc = await productsCollection.findOne({_id: new ObjectId(id)})
+        if (newDoc && newDoc._id) newDoc._id = newDoc._id.toString()
+        req.data = { status: '200', message: 'Cập nhật chi tiết sản phẩm thành công', data: newDoc }
+    }
+    catch(err){
+        console.error('updateProductDetails error', err)
+        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+    }
+    next()
+}
+
+export { updateProductHighlight, updateProductDetails }
+
+// purchase endpoint: decrement warehouse atomically and increase sold count
+async function purchaseProduct(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        const id = req.params.id
+        const payload = req.body || {}
+        const qty = Math.max(0, Number(payload.quantity) || 0)
+        if (qty <= 0){
+            req.data = { status: '400', message: 'Số lượng mua phải lớn hơn 0' }
+            return next()
+        }
+        // Atomically decrement warehouse if enough stock exists
+        const result = await productsCollection.findOneAndUpdate(
+            { _id: new ObjectId(id), warehouse: { $gte: qty } },
+            { $inc: { warehouse: -qty, sold: qty } },
+            { returnDocument: 'after' }
+        )
+        if (!result.value){
+            req.data = { status: '409', message: 'Sản phẩm không đủ trong kho' }
+            return next()
+        }
+        const doc = result.value
+        if (doc && doc._id) doc._id = doc._id.toString()
+        req.data = { status: '200', message: 'Mua hàng thành công, kho đã được cập nhật', data: doc }
+    }catch(err){
+        console.error('purchaseProduct error', err)
+        req.data = { status: '500', message: 'Lỗi máy chủ khi xử lý mua hàng' }
+    }
+    next()
+}
+
+// add review to product
+async function addProductReview(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        const id = req.params.id
+        const payload = req.body || {}
+        const rating = Number(payload.rating) || 0
+        const name = payload.name || ''
+        const phone = payload.phone || ''
+        const comment = payload.comment || ''
+
+        // handle uploaded files (multer puts them on req.files)
+        const files = (req.files || []).map(f => {
+            // store web-accessible path like /uploads/reviews/<filename>
+            const filename = f.filename || (f.path && f.path.split(/[\\/]/).pop())
+            return filename ? `/uploads/reviews/${filename}` : ''
+        }).filter(Boolean)
+
+        const userId = req.userId || payload.userId || null
+
+        const review = {
+            _id: new ObjectId(),
+            rating,
+            name,
+            phone,
+            comment,
+            images: files,
+            userId,
+            createdAt: new Date()
+        }
+
+        await productsCollection.updateOne({_id: new ObjectId(id)}, { $push: { reviews: review } })
+
+        req.data = { status: '201', message: 'Gửi đánh giá thành công', data: { review } }
+    }
+    catch(err){
+        console.error('addProductReview error', err)
+        req.data = { status: '500', message: 'Lỗi khi lưu đánh giá' }
+    }
+    next()
+}
+
+export { addProductReview, removeProductReview }
+
+// export createProduct for router usage
+export { createProduct }
+
+// export purchase handler for router
+export { purchaseProduct }
+// export adjust handler for admin route
+export { adjustProductSold }
+
+// remove a review (only allow when user owns the review)
+async function removeProductReview(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        const id = req.params.id
+        const rid = req.params.rid
+
+        // try to find product and review
+        const product = await productsCollection.findOne({_id: new ObjectId(id)})
+        if (!product) { req.data = { status: '404', message: 'Sản phẩm không tồn tại' }; return next() }
+        const reviews = Array.isArray(product.reviews) ? product.reviews : []
+        const review = reviews.find(r => String(r._id) === String(rid) || (r._id && String(r._id) === String(rid)))
+        if (!review){ req.data = { status: '404', message: 'Đánh giá không tồn tại' }; return next() }
+
+
+        // determine requesting user id (from middleware or body/header fallback)
+        const requester = req.userId || (req.body && req.body.userId) || req.headers['x-user-id'] || null
+        if (review.userId){
+            if (!requester || String(requester) !== String(review.userId)){
+                req.data = { status: '403', message: 'Bạn không có quyền xóa đánh giá này' }
+                return next()
+            }
+        } else {
+            // review has no owner — disallow deletion via API to prevent abuse
+            req.data = { status: '403', message: 'Đánh giá không có quyền xóa' }
+            return next()
+        }
+
+        await productsCollection.updateOne({_id: new ObjectId(id)}, { $pull: { reviews: { _id: review._id } } })
+        req.data = { status: '200', message: 'Xóa đánh giá thành công' }
+    }
+    catch(err){
+        console.error('removeProductReview error', err)
+        req.data = { status: '500', message: 'Lỗi khi xóa đánh giá' }
+    }
+    next()
+}
+
+// Admin: adjust sold count and warehouse atomically
+async function adjustProductSold(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        if (!productsCollection) throw new Error('Products collection unavailable')
+        const id = req.params.id
+        const payload = req.body || {}
+        const delta = Number(payload.delta) || 0
+        if (delta === 0){
+            req.data = { status: '400', message: 'Delta must be a non-zero integer' }
+            return next()
+        }
+        // if delta > 0: increase sold by delta (a manual sale or adjustment) -> decrease warehouse by delta
+        // require warehouse >= delta
+        // if delta < 0: decrease sold by -delta (refund/cancel) -> increase warehouse by -delta
+        // require sold >= -delta to avoid negative sold
+
+        const filter = { _id: new ObjectId(id) }
+        if (delta > 0) filter.warehouse = { $gte: delta }
+        if (delta < 0) filter.sold = { $gte: Math.abs(delta) }
+
+        const update = { $inc: { warehouse: -delta, sold: delta } }
+
+        const opts = { returnDocument: 'after' }
+        const result = await productsCollection.findOneAndUpdate(filter, update, opts)
+        if (!result.value){
+            req.data = { status: '409', message: 'Không thể điều chỉnh: kiểm tra tồn kho / số đã bán' }
+            return next()
+        }
+        const doc = result.value
+        if (doc && doc._id) doc._id = doc._id.toString()
+        req.data = { status: '200', message: 'Điều chỉnh thành công', data: doc }
+    }catch(err){
+        console.error('adjustProductSold error', err)
+        req.data = { status: '500', message: 'Lỗi khi điều chỉnh sản phẩm' }
+    }
+    next()
+}

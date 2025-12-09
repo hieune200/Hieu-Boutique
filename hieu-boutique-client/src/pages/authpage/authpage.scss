@@ -7,39 +7,137 @@
     top: 0;
     left: 0;
     z-index: 1001;
-    background-color: white;
     height: 100vh;
     width: 100vw;
+    /* CSS variables for quick tuning */
+    --brand-red: #c60b0b;
+    --brand-red-soft: #d73b3b; /* softer/lighter variant used for small pills */
+        --auth-overlay-color: rgba(0,0,0,0.45); /* dark overlay for readability */
+    --auth-form-bg-alpha: 0.94; /* form background alpha */
+    --auth-form-blur: 8px; /* backdrop blur behind form */
+    --auth-form-saturate: 115%;
+    --auth-accent: #111;
+    --input-border: rgba(17,17,17,0.08);
+    --input-focus: rgba(198,11,11,0.12);
+
+    /* Page background: plain black around the centered auth card */
+        background-image: url('../../assets/imgs/home/slide11.png');
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-color: #0b0b0b; /* fallback background */
+
+    /* No decorative overlay or background image for auth pages */
+    .auth-hero{
+        width: 420px;
+        max-width: calc(100vw - 40px);
+        text-align: center;
+        margin-bottom: 8px;
+        color: white;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+    }
+
     .title-login{
-        background-color: black;
-        width: 400px;
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
+        background-color: transparent;
+        width: 100%;
         text-align: center;
         color: white;
-        line-height: 60px;
-        font-size: 26px;
-        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 28px;
+        font-weight: 700;
         letter-spacing: 2px;
+        position: relative;
+        z-index: 3;
+        text-shadow: 0 4px 18px rgba(0,0,0,0.35);
+    }
+
+    /* Brand styling for two-column layout */
+    .auth-hero .brand{
+        display: block;
+        font-size: 40px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: #fff;
+    }
+
+    /* Plain, elegant welcome text without a background box */
+    .welcome-msg{
+        margin-top: 6px;
+        color: rgba(255,255,255,0.95);
+        text-align: center;
+        line-height: 1.2;
+    }
+    .welcome-msg h2{
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-shadow: 0 6px 20px rgba(0,0,0,0.45);
+    }
+    .welcome-msg p{
+        margin: 8px 0 0;
+        font-size: 14px;
+        opacity: 0.95;
+        font-weight: 500;
     }
     .login{
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        padding: 10px 20px;
-        align-items: start;
-        width: 400px;
-        border: 1px solid #000;
-        &>label{
-            font-size: 15px;
-            margin: 10px 2px -5px;
+        gap: 12px;
+        padding: 24px 28px;
+        align-items: stretch;
+        width: 420px;
+        max-width: calc(100vw - 40px);
+        border-radius: 12px;
+        position: relative;
+        z-index: 3;
+        -webkit-backdrop-filter: blur(var(--auth-form-blur)) saturate(var(--auth-form-saturate));
+        backdrop-filter: blur(var(--auth-form-blur)) saturate(var(--auth-form-saturate));
+        transition: transform 160ms ease, box-shadow 160ms ease;
+
+        /* Plain white card (no background-image behind) */
+        background: rgba(255,255,255,var(--auth-form-bg-alpha));
+        border: 1px solid rgba(0,0,0,0.06);
+        box-shadow: 0 10px 36px rgba(2,2,2,0.10);
+
+        color: var(--auth-accent);
+
+        &:hover{
+            transform: translateY(-4px);
+            box-shadow: 0 18px 36px rgba(2,2,2,0.14);
         }
+
+        &>label{
+            font-size: 14px;
+            margin: 4px 2px 0px;
+            color: rgba(17,17,17,0.85);
+        }
+
         &>input{
             width: 100%;
-            height: 40px;
-            border-radius: 4px;
-            padding: 5px 10px;
+            height: 46px;
+            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid var(--input-border);
+            background: #fff;
+            color: rgba(17,17,17,0.95);
+            transition: box-shadow 120ms ease, border-color 120ms ease, background 120ms ease;
         }
+
+        &>input::placeholder{ color: rgba(17,17,17,0.4); }
+
+        &>input:focus{
+            outline: none;
+            box-shadow: 0 6px 18px rgba(198,11,11,0.08);
+            border-color: var(--input-focus);
+            background: #fff;
+        }
+
         .login-feature{
             display: flex;
             justify-content: space-between;
@@ -47,50 +145,111 @@
             padding: 5px 2px;
             width: 100%;
             font-size: 14px;
-            div{
-                display: flex;
-                align-items: center;
-                gap: 5px;
-            }
+            color: rgba(17,17,17,0.85);
         }
+
+        /* inner container for checkbox + label: add spacing between box and text */
+        .login-feature > div{ display: flex; align-items: center; gap: 10px; }
+
         .btn-login{
-            background-color: black;
+            background-color: var(--brand-red);
             width: 100%;
-            height: 40px;
+            height: 48px;
             color: white;
             font-size: 16px;
-            font-weight: 600;
-            border: unset;
-            border-radius: 4px;
-            outline: unset;
-            box-shadow: 3px 3px 3px 0 rgb(138, 138, 138);
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(198,11,11,0.12);
         }
+
+        .btn-login:hover{ transform: translateY(-2px); filter: brightness(0.98); }
+
         .go-to-register{
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 2px;
+            gap: 8px;
             width: 100%;
             font-size: 14px;
+            color: rgba(17,17,17,0.78);
         }
+
+        /* Underlined red link style (matches 'Đăng nhập ngay' in reference) */
+        .go-to-register a{
+            background: transparent;
+            color: var(--brand-red);
+            text-decoration: underline;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 0;
+            display: inline;
+        }
+        .go-to-register p{ margin: 0 10px 0 0; color: rgba(17,17,17,0.7) }
+
         .login-2nd{
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 40px;
+            gap: 18px;
             width: 100%;
-            margin: 20px 0;
-            img{
-                width: 30px;
-                height: 30px;
-                border-radius: 50%;
-                outline: 10px rgba(128, 128, 128, 0.147) solid;
-                cursor: pointer;
-            }
+            margin: 18px 0 6px;
+        }
+        .login-2nd img, .login-2nd svg{
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            padding: 6px;
+            background: rgba(0,0,0,0.04);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+            cursor: pointer;
+        }
+        .social-icon{ width:38px; height:38px }
+    }
+
+    /* Desktop two-column layout */
+    @media (min-width: 1000px){
+        .contain-auth{
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 56px;
+            padding: 60px 80px;
+        }
+        .auth-hero{
+            width: 480px;
+            text-align: left;
+            align-items: flex-start;
+            padding-left: 8px;
+        }
+        .title-login{ font-size: 42px; text-align: left }
+        .welcome-msg h2{ font-size: 22px; color: rgba(255,255,255,0.95) }
+        .welcome-msg p{ color: rgba(255,255,255,0.85) }
+        .login{
+            width: 520px;
+            padding: 36px 40px;
+            border-radius: 14px;
         }
     }
+    /* Logo in corner for auth pages */
+    .auth-logo{
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        z-index: 2100;
+        display: inline-block;
+        width: 88px;
+        height: auto;
+        border-radius: 8px;
+    }
+    .auth-logo img{ width:100%; height:auto; display:block }
+    @media (max-width: 700px){
+        .auth-logo{ width:72px; top:12px; left:12px }
+    }
     .title-register{
-        background-color: black;
+        background-color: var(--brand-red);
         width: 770px;
         border-top-left-radius: 12px;
         border-top-right-radius: 12px;
@@ -100,33 +259,57 @@
         font-size: 26px;
         font-weight: 600;
         letter-spacing: 2px;
+        position: relative;
+        z-index: 3;
     }
     .register{
-        width: 770px;
+        width: 520px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        padding: 10px 20px;
-        align-items: start;
-        border: 1px solid #000;
+        gap: 12px;
+        padding: 24px 28px;
+        align-items: stretch;
+        border: 1px solid rgba(0,0,0,0.12);
+        background: rgba(255,255,255,var(--auth-form-bg-alpha));
+        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        border-radius: 12px;
+        position: relative;
+        z-index: 3;
+        -webkit-backdrop-filter: blur(var(--auth-form-blur)) saturate(var(--auth-form-saturate));
+        backdrop-filter: blur(var(--auth-form-blur)) saturate(var(--auth-form-saturate));
+        transition: background 180ms ease, transform 160ms ease, box-shadow 160ms ease;
+        &:hover{
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+        }
         &_input{
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 12px;
             &>div{
                 display: flex;
                 flex-direction: column;
-                gap: 10px;
-                width: 360px;
+                gap: 8px;
+                width: 100%;
                 &>label{
                     font-size: 15px;
-                    margin: 10px 2px -5px;
+                    margin: 6px 2px -4px;
                 }
                 &>input{
                     width: 100%;
-                    height: 40px;
-                    border-radius: 4px;
-                    padding: 5px 10px;
+                    height: 44px;
+                    border-radius: 8px;
+                    padding: 8px 12px;
+                    border: 1px solid var(--input-border);
+                    background: #fff;
                 }
+            }
+
+            /* Desktop: make the register form two columns (each column has 3 fields) */
+            @media (min-width: 700px){
+                flex-direction: row;
+                gap: 18px;
+                &>div{ flex: 1 1 0; }
             }
         }
         &_term{
@@ -136,8 +319,45 @@
             font-size: 14px;
             font-weight: 600;
         }
+
+/* style for the inline link-like button used to open terms modal */
+.link-like{
+    /* default: subtle inline link (used in register terms) */
+    background: transparent;
+    border: none;
+    color: var(--brand-red);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+/* Make the "Quên mật khẩu" button in the login card look like a small pill */
+        /* Stronger, high-specificity rule to ensure consistent button appearance */
+        .contain-auth .login .login-feature > div > .link-like,
+        .contain-auth .login .link-like {
+                    /* Plain inline link: remove border/background/shadow */
+                    background-color: transparent !important;
+                    color: #6b6b6b !important;
+                    text-decoration: underline !important;
+                    font-weight: 600;
+                    font-size: 14px;
+                    padding: 0 !important;
+                    height: auto;
+                    line-height: normal;
+                    display: inline;
+                    align-items: unset;
+                    justify-content: unset;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    box-shadow: none !important;
+                    cursor: pointer;
+                }
+                .contain-auth .login .link-like:hover{ filter: brightness(0.98) }
+                .contain-auth .login .link-like:focus{ outline: none }
         .btn-register{
-            background-color: black;
+            background-color: var(--brand-red);
             width: 100%;
             height: 40px;
             color: white;
@@ -147,6 +367,13 @@
             outline: unset;
             border-radius: 4px;
             box-shadow: 3px 3px 3px 0 rgb(138, 138, 138);
+            cursor: pointer;
+            transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+            &:hover{
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+                filter: brightness(0.98);
+            }
         }
         .go-to-login{
             margin: 5px auto;
@@ -154,3 +381,24 @@
         }
     }
 }
+
+/* Responsive: show centered card with optional illustration on wide screens */
+@media (min-width: 1100px){
+    .contain-auth{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 80px;
+        background-position: center right;
+    }
+}
+
+/* Styled checkbox */
+input[type="checkbox"].pointer{ width:16px; height:16px; accent-color: var(--brand-red) }
+
+/* Small helpers for links and subtle labels */
+.contain-auth a{ color: var(--brand-red); text-decoration: underline; }
+.contain-auth .btn-register{ border-radius: 8px }
+
+/* Make forgot link less prominent */
+.login-feature a{ color: rgba(0,0,0,0.6); font-size: 13px }

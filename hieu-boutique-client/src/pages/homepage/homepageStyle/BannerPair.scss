@@ -1,0 +1,33 @@
+.banner-pair{
+    width:100%;
+    margin: 18px 0;
+}
+.pair-inner{
+    max-width:1200px;
+    margin:0 auto;
+    display:flex;
+    gap:20px;
+    align-items:stretch;
+}
+.pair-item{
+    flex:1;
+    display:block;
+    overflow:hidden;
+    height:360px; /* fixed height so both items match */
+    border-radius:10px;
+}
+.pair-item img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover; /* fill while keeping focal */
+}
+
+@media (max-width:1200px){
+    .pair-item{height:320px}
+}
+
+@media (max-width:900px){
+    .pair-inner{flex-direction:column;gap:12px}
+    .pair-item{height:220px}
+}

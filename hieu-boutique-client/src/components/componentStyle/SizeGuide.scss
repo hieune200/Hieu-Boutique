@@ -1,0 +1,40 @@
+.size-guide-link{
+    background:none;
+    border:none;
+    color:#d32f2f;
+    text-decoration:underline;
+    cursor:pointer;
+    font-weight:600;
+    padding:0;
+}
+.size-guide-modal{
+    position:fixed;
+    left:0;right:0;top:0;bottom:0;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.size-guide-overlay{
+    position:absolute;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,0.5);
+}
+.size-guide-box{
+    position:relative;
+    width:min(900px, 95%);
+    max-height:85%;
+    background:#fff;
+    border-radius:8px;
+    overflow:auto;
+    box-shadow:0 20px 40px rgba(0,0,0,0.25);
+    z-index:10000;
+}
+.size-guide-box header{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;
+}
+.size-guide-box h3{margin:0;font-size:18px}
+.size-guide-box .close{background:none;border:0;font-size:26px;line-height:1;cursor:pointer}
+.size-guide-content{padding:18px 20px;color:#333}
+.size-table{width:100%;border-collapse:collapse;margin-top:12px}
+.size-table th,.size-table td{padding:8px 10px;border:1px solid #eee;text-align:center}
+.size-table thead th{background:#fafafa}
+.size-guide-content .note{margin-top:12px;color:#666}

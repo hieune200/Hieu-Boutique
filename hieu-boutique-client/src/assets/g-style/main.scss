@@ -1,3 +1,6 @@
+@import './_theme.scss';
+@import './global.scss';
+
 *{
     margin: 0;
     padding: 0;
@@ -5,7 +8,19 @@
     font-family: "Montserrat", sans-serif;
 }
 body{
-    background-color: rgba(231, 231, 231, 0.137);
+    background-color: #ffffff;
+}
+/* Use themed background */
+body{background-color:var(--bg)}
+/* Ensure the app root and pages keep minimum height so hot-updates don't visually collapse content */
+html, body, #root {
+    height: 100%;
+    min-height: 100%;
+}
+
+/* Make main elements fill viewport minus header/footer roughly; adjust if header/footer sizes change */
+main{
+    min-height: calc(100vh - 160px);
 }
 li{
     list-style: none;
@@ -14,6 +29,8 @@ li{
     cursor: pointer;
 }
 .unselect{
+    -webkit-user-select: none;
+    -ms-user-select: none;
     user-select: none;
 }
 a{
@@ -37,4 +54,73 @@ a{
         bottom: -30%;
         left: 200%;
     }    
+}
+
+/* Floating chat / support button overrides (match provided design) */
+.floating-chat,
+.chat-fab,
+.chatbot-toggle,
+.support-button,
+.react-chatbot-kit-chat-button,
+.chat-widget-button{
+    position: fixed !important;
+    right: 18px !important;
+    bottom: 18px !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 8px !important;
+    background: #c21 !important; /* red background */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18) !important;
+    z-index: 9999 !important;
+}
+
+/* support left-aligned variant */
+.floating-chat.left,
+.chat-fab.left,
+.chatbot-toggle.left,
+.support-button.left,
+.react-chatbot-kit-chat-button.left,
+.chat-widget-button.left{
+    left: 18px !important;
+    right: auto !important;
+}
+
+/* inner white circular badge */
+.floating-chat .inner-circle,
+.chat-fab .inner-circle,
+.react-chatbot-kit-chat-button .inner-circle,
+.chat-widget-button .inner-circle{
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* arrow icon color */
+.floating-chat .inner-circle svg path,
+.chat-fab .inner-circle svg path,
+.react-chatbot-kit-chat-button .inner-circle svg path,
+.chat-widget-button .inner-circle svg path{
+    fill: #c21 !important;
+}
+
+/* rotate arrow when placed on left so it points right visually */
+.floating-chat.left .inner-circle svg,
+.chat-fab.left .inner-circle svg{
+    transform: rotate(0deg);
+}
+
+/* fallback: if button contains an img, size it smaller */
+.floating-chat img, .chat-fab img, .react-chatbot-kit-chat-button img{width:20px;height:20px}
+
+/* reduce visual footprint on small screens */
+@media (max-width: 480px){
+    .floating-chat, .chat-fab, .react-chatbot-kit-chat-button{right:12px;bottom:12px;width:48px;height:48px}
+    .floating-chat .inner-circle, .chat-fab .inner-circle{width:30px;height:30px}
 }

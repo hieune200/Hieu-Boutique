@@ -24,6 +24,7 @@ async function registerNewUser (req, res, next) {
         userSchema.email = data.email
         userSchema.phoneNumber = data.phoneNumber
         userSchema.address = data.address
+        userSchema.avatar = data.avatar || '/ava.svg'
         await accountsCollection.insertOne(userSchema)
         req.data = {
             status: "201",
@@ -86,7 +87,7 @@ async function getUserInfor (req, res, next){
             phoneNumber: getInfor?.phoneNumber,
             address: getInfor?.address,
             sex: getInfor?.sex,
-            avatar: getInfor?.avatar
+            avatar: getInfor?.avatar || '/ava.svg'
         }
         req.data = {
             status: "201",

@@ -1,0 +1,85 @@
+/* Visual match to the provided promo bar image */
+.top-promo{
+  /* fixed promo bar at the very top */
+  background: var(--brand-red); /* deep red */
+  color: #fff;
+  font-size: 14px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50003;
+  height: var(--promo-height, 44px);
+}
+
+/* transition for promo when header-hidden is toggled */
+/* When hiding, move both promo and header together by the combined height so nothing remains visible */
+body.header-hidden .top-promo{
+  transform: translateY(calc(-1 * (var(--promo-height) + var(--header-height))));
+  transition: transform .26s ease;
+}
+.top-promo{ transition: transform .26s ease; will-change: transform }
+.top-promo__inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  height: 100%; /* fill the fixed bar height */
+  box-sizing: border-box;
+}
+.top-promo__left{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.top-promo__left .promo-text{
+  display: inline-block;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.promo-cta{
+  background: #fff;
+  color: var(--brand-red);
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 700;
+}
+.top-promo__right{
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.top-promo__right .hotline,
+.top-promo__right .shop{
+  display: inline-block;
+}
+.top-promo__right .hotline strong,
+.top-promo__right .shop strong{
+  font-weight: 700;
+}
+
+/* Ensure links inside the promo bar are white (including visited state) */
+.top-promo a, .top-promo a:visited, .top-promo a:link{
+  color: #fff;
+}
+
+@media (max-width: 800px){
+  .top-promo__inner{flex-direction:column;align-items:flex-start;gap:6px;height:auto;padding:10px}
+  .top-promo__right{align-self:stretch;justify-content:space-between;width:100%}
+}
+
+/* make promo + header stick together and fixed at top */
+
+/* deprecated: stacking handled by fixed promo + fixed header; keep helpers if needed */
+.top-stacked{ }
+
+

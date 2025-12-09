@@ -1,4 +1,6 @@
 .productpage{
+    /* cSpell:disable */
+    padding-bottom: 80px; /* reduced page bottom padding to shorten page length */
     &_path{
         background-color: rgb(230, 230, 230);
         padding: 15px calc(50% - 600px);
@@ -20,14 +22,23 @@
                 display: flex;
                  flex-direction: column;
                  flex: 0 1 20%;
+                align-items: center; /* center thumbnails horizontally */
+                justify-content: center; /* center thumbnails vertically within list */
                 .img{
                     position: relative;
                     aspect-ratio: 1;
-                    width: 100%;
+                    width: 64px; /* compact thumbnail */
                     object-fit: cover;
                     object-position: -20% 0;
-                    margin-bottom: 10px;
+                    margin-bottom: 8px;
                     overflow: hidden;
+                    cursor: pointer;
+                    transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+                }
+                .img.thumb-active{
+                    transform: translateY(-2px) scale(1.03);
+                    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+                    outline: 3px solid rgba(198,11,11,0.9);
                 }
             }
             img{
@@ -39,8 +50,14 @@
                 overflow: hidden;
                 img{
                     width: 100%;
+                    transition: transform .28s ease, opacity .28s ease;
+                    display: block;
                 }
-                min-height: 630px;
+                img.img-anim{
+                    transform: scale(1.04);
+                    opacity: 0.95;
+                }
+                min-height: 520px; /* reduce main image height to shorten page */
             }
         }
         .prod-infor{
@@ -53,20 +70,180 @@
                 font-size: 14px;
                 color: #807878;
             }
+            .rating-sold{ margin-bottom: 8px }
+            .stars{ display:flex; align-items:center; gap:8px; color:#c60b0b }
+            .star{ color:#c60b0b; font-size:18px; margin-right:2px }
+            .rating-count{ color:#333; font-size:14px }
+            .sep{ margin: 0 8px; color:#999 }
+            .sold{ color:#666; font-size:14px }
             .price{
                 font-size: 24px;
+                font-weight: 700;
+                color: #c60b0b; /* sale/current price in site red */
             }
+            .price-row{ display:flex; align-items:baseline; gap:12px }
+            .orig-price{
+                color: #888; /* original/struck price back to gray */
+                font-size: 14px;
+                text-decoration: line-through;
+                opacity: 0.9;
+            }
+            .color-selection{
+                margin: 12px 0;
+                .color-name{ font-weight:700; margin-bottom:8px }
+                .color-swatches{ display:flex; gap:6px; align-items:center; justify-content: center }
+                .swatch{ background:none; border:none; padding:0; cursor:pointer }
+                .swatch .swatch-circle{ display:block; width:36px; height:36px; border-radius:50%; border:2px solid rgba(0,0,0,0.12) }
+                .swatch.active .swatch-circle{ outline:3px solid rgba(198,11,11,0.9); transform: scale(1.05) }
+            }
+
+            .color-row{
+                display:flex;
+                flex-direction: column; /* stack label above swatches */
+                align-items: flex-start; /* align left with label */
+                margin:12px 0;
+            }
+            /* legacy selector style (no-op when selector is in info column) */
+            .left-col-color{ display:block }
+            .selected-color-meta{ margin-bottom:6px }
+            .selected-color-name{ margin:0 0 8px 0; font-size:16px; font-weight:700 }
+            .color-swatches{ display:flex; gap:8px; align-items:center; justify-content: flex-start; width:100% }
+            /* compact round swatches (match attached example) */
+            .color-thumb{
+                background:transparent;
+                border:none;
+                padding:0;
+                border-radius:50%;
+                width:28px;
+                height:28px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                box-shadow:0 4px 8px rgba(0,0,0,0.06);
+                cursor:pointer;
+                position:relative; /* allow absolute outline */
+                transition: transform .08s ease, box-shadow .08s ease;
+            }
+            .color-thumb:hover{ transform: translateY(-1px) }
+            .color-thumb img{ width:20px; height:20px; object-fit:cover; border-radius:50% }
+            .color-thumb .swatch-circle{ display:block; width:18px; height:18px; border-radius:50%; border:2px solid rgba(0,0,0,0.08); box-sizing: border-box }
+            .color-thumb.placeholder .swatch-circle{ background:#f3f3f3; border-color:#eee }
+            /* active ring */
+            .color-thumb.active::after{
+                content: '';
+                position: absolute;
+                top: -3px;
+                left: -3px;
+                width: calc(100% + 6px);
+                height: calc(100% + 6px);
+                border-radius: 50%;
+                box-shadow: 0 0 0 2px rgba(198,11,11,0.95) inset;
+                pointer-events: none;
+            }
+            .vouchers{
+                margin-top:12px;
+            }
+            .vouchers-label{ color:#222; margin-bottom:8px; font-size:15px }
+            .voucher-list{ display:flex; gap:12px; align-items:center; margin-top:6px }
+            .voucher{
+                background:#0b0b0b;
+                color:#fff;
+                border-radius:12px;
+                padding:10px 18px;
+                border:none;
+                display:inline-flex;
+                align-items:center;
+                gap:10px;
+                cursor:pointer;
+                font-weight:800;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+                transition: transform .12s ease, box-shadow .12s ease;
+            }
+            .voucher svg{ height:18px; width:18px; display:block; color: #fff }
+            .voucher span{ display:inline-block }
+            .voucher:hover{ transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.18) }
+            /* voucher modal */
+            .voucher-modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:9999 }
+            .voucher-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.35) }
+            .voucher-box{ background:#fff; width:420px; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,0.2); z-index:10000; overflow:hidden }
+            .voucher-box header{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid #eee }
+            .voucher-box h3{ margin:0; color:#c60b0b }
+            .voucher-box .close{ background:none; border:none; font-size:22px; cursor:pointer }
+            .voucher-content{ padding:18px 20px }
+            .voucher-content .muted{ color:#777; margin-top:6px; margin-bottom:12px }
+            .voucher-copy{ background:#c60b0b; color:#fff; border:none; padding:10px 14px; border-radius:8px; cursor:pointer }
+            .voucher-copy[disabled]{ opacity:0.5; cursor:not-allowed }
+            .voucher-close{ background:#eee; border:none; padding:10px 14px; border-radius:8px; cursor:pointer }
+            /* login prompt modal */
+            .login-prompt-modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:11000 }
+            .login-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.45) }
+            .login-box{ background:#fff; width:360px; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,0.28); padding:18px; z-index:11001 }
+            .login-box h3{ margin:0 0 8px; color:#c60b0b }
+            .login-box p{ margin:0; color:#333 }
+            /* polished button styles for login prompt */
+            .login-box .btn{
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 96px;
+                padding: 8px 14px;
+                font-weight: 700;
+                border-radius: 8px;
+                border: 1px solid rgba(0,0,0,0.12);
+                background: transparent;
+                color: #222;
+                cursor: pointer;
+                transition: transform .12s ease, box-shadow .14s ease, background-color .12s ease, color .12s ease;
+                box-shadow: none;
+                line-height:1;
+            }
+            .login-box .btn:hover{ transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,0.10); }
+            .login-box .btn:active{ transform: translateY(0); box-shadow: none; }
+            .login-box .btn:focus{ outline: 3px solid rgba(198,11,11,0.12); outline-offset: 2px; }
+
+            /* primary action (Đăng nhập) — last button in the inline row */
+            .login-box > div .btn:last-child{
+                background: #c60b0b;
+                border-color: #c60b0b;
+                color: #fff;
+                box-shadow: 0 10px 30px rgba(198,11,11,0.16);
+            }
+
+            /* secondary action (Hủy) — subtle ghost style */
+            .login-box > div .btn:first-child{
+                background: transparent;
+                border-color: rgba(0,0,0,0.09);
+                color: #333;
+            }
+
+            /* disabled / not-allowed state if needed */
+            .login-box .btn[disabled]{ opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+            /* make buttons stack on small screens for better UX */
+            @media (max-width: 480px){
+                .login-box{ width: calc(100% - 40px); padding: 14px; }
+                .login-box > div{ display:flex !important; flex-direction: column !important; gap: 10px; align-items: stretch; }
+                .login-box .btn{ width: 100%; min-width: 0; }
+                .login-box .btn:last-child{ box-shadow: 0 8px 22px rgba(198,11,11,0.12); }
+            }
+            
             .size{
                 margin-top: 10px;
                 p{
                     font-size: 16px;
                     margin-bottom: 10px;
                 }
+                .size-help{
+                    margin-top:8px;
+                    color:#555;
+                    font-size:14px;
+                    line-height:1.45;
+                }
                 input{
                     display: none;
                     &:checked+label{
-                        border: 2px solid green;
-                        color: green;
+                        border: 2px solid #c60b0b;
+                        color: #c60b0b;
                         opacity: 1;
                     }
                 }
@@ -86,41 +263,53 @@
             }
             .set-quantity-cart{
                 display: flex;
-                 justify-content: space-between;
-                 gap: 2%;
+                 justify-content: flex-start;
+                 gap: 12px;
                 .setquantity{
                     display: flex;
                      justify-content: space-between;
                      align-items: center;
                     border: 2px solid #000;
-                    border-radius: 16px;
+                    border-radius: 999px;
                     width: 150px;
+                    height: 48px;
+                    padding: 0 6px;
+                    background: #fff;
                     span{
                         text-align: center;
-                        font-weight: 500;
+                        font-weight: 700;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-width: 36px;
                     }
                     .num{
                         border-left: 1.5px solid #000;
                         border-right: 1.5px solid #000;
-                        flex: 2;
-                        line-height: 15px;
+                        flex: 1;
+                        line-height: 20px;
+                        font-size: 16px;
                     }
                     .btn{
-                        // padding-bottom: 5px;
-                        flex: 1;
-                        font-weight: 700;
+                        flex: 0 0 36px;
+                        font-weight: 800;
+                        cursor: pointer;
+                        -webkit-user-select: none;
+                        -ms-user-select: none;
+                        user-select: none;
                     }
                 }
                 .set-btn{
-                    display: flex;
+                    display: inline-flex;
                      justify-content: center;
                      align-items: center;
-                    height: 30px;
-                    width: 200px;
+                    height: 48px;
+                    min-width: 56px;
+                    padding: 0 12px;
                     border: 2px solid #000;
-                    border-radius: 16px;
+                    border-radius: 999px;
                     img{
-                        height: 60%;
+                        height: 22px;
                     }
                     &:hover{
                         transition: all .2s linear;
@@ -131,13 +320,34 @@
                         box-shadow: unset;
                         transform: unset;
                     }
+                    &.disabled{
+                        background: #e0e0e0 !important;
+                        border-color: #c8c8c8 !important;
+                        color: #666 !important;
+                        cursor: not-allowed !important;
+                        box-shadow: none !important;
+                        opacity: 0.95;
+                    }
+                }
+                .set-cart{ /* keep cart as compact outline */
+                    background: #fff;
                 }
                 .set-buy{
-                    flex: 2;
-                    background-color: rgb(0, 52, 0);
-                    border-color: rgb(0, 52, 0);
-                    color: aliceblue;
-                    font-weight: 500;
+                    flex: 1 1 auto;
+                    background-color: #c60b0b; /* site red */
+                    border-color: #c60b0b;
+                    color: #fff;
+                    font-weight: 700;
+                    padding: 0 20px;
+                    min-width: 120px;
+                }
+                /* stack controls on small screens */
+                @media (max-width: 480px){
+                    flex-direction: column;
+                    align-items: stretch;
+                    .setquantity{ width: 100%; max-width: 320px; }
+                    .set-btn{ width: 100%; min-width: 0 }
+                    .set-buy{ order: 3 }
                 }
             }
             .services{
@@ -171,21 +381,262 @@
             }
         }
     }
-    &_list{
+    /* Minimal product description styles (per-product) */
+    &_description{
         width: 100%;
-        padding: 10px calc(50% - 600px);
-        min-height: 453px;
-        &>.title{
-            margin: 20px 0;
-            padding: 20px 2px 10px;
-            border-bottom: 1px solid #00000059;
-            width: 100%;
-            font-size: 25px;
+        padding: 18px calc(50% - 600px);
+        .title{ margin: 20px 0; font-size: 24px; border-bottom: 1px solid #eee; padding-bottom: 10px }
+        .description-block{
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            color: #222;
+            line-height: 1.6;
         }
+        .description-block h4{ font-size: 16px; margin-top: 12px; margin-bottom: 8px; color: #111 }
+        .description-block p{ margin: 0 0 12px 0; color: #444 }
+        .description-block ul, .description-block ol{ margin-left: 18px; margin-bottom: 12px }
+        .description-block li{ margin: 6px 0; color: #444 }
+    }
+        &_list{
+            width: 100%;
+            padding: 8px calc(50% - 600px);
+            min-height: 380px; /* tightened to reduce vertical space */
+            &>.title{
+                margin: 14px 0;
+                padding: 14px 2px 8px;
+                border-bottom: 1px solid #00000059;
+                width: 100%;
+                font-size: 22px;
+            }
+            .list{
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1%;
+            }
+        }
+
+    /* Recently viewed products */
+    &_recently{
+        width: 100%;
+        padding: 8px calc(50% - 600px);
+        &>.title{ margin: 14px 0; padding: 8px 2px 8px; font-size: 20px }
         .list{
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 1%;
+        }
+        margin-bottom: 18px;
+    }
+
+    .recent-mini-card{
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        background:#fff;
+        border-radius:10px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        min-height: 214px; /* reduced to ~2/3 of previous (320px -> ~214px) */
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s cubic-bezier(.2,.9,.2,1);
+        will-change: transform;
+        background-clip: padding-box;
+    }
+    .recent-mini-card .mini-img{ flex: 0 0 auto; display:block; width:100%; aspect-ratio:1; overflow:hidden; border-radius:8px }
+    .recent-mini-card .mini-img img{ width:100%; height:100%; object-fit:cover; display:block; transition: transform .36s cubic-bezier(.2,.9,.2,1); transform-origin: center center }
+    .recent-mini-card .mini-meta{ display:flex; flex-direction:column; gap:6px; margin-top:6px; align-items: flex-start; text-align:left }
+    .recent-mini-card .meta-top{ display:flex; align-items:center; gap:12px; width:100% }
+    .recent-mini-card .mini-title{ font-size:15px; font-weight:700; color:#111; line-height:1.2 }
+    .recent-mini-card .mini-price{ color:#c60b0b; font-weight:800 }
+    /* small muted product code line under title — if you later add code in JSX, this will style it */
+    .recent-mini-card .mini-code{ color:#888; font-size:13px; margin-top:4px }
+    .recent-mini-card .mini-orig{ color:#999; font-size:13px; margin-left:8px; text-decoration: line-through }
+    .recent-mini-card .mini-rating{ color:#f5c542; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:6px }
+    .recent-mini-card .mini-rating .rating-value{ color:#222; font-weight:700; margin-right:6px }
+    .recent-mini-card .mini-rating .star{ color:#f5c542; font-size:16px }
+    .recent-mini-card .mini-sold{ color:#777; font-size:13px; margin-top:6px }
+    .recent-mini-card .discount-badge{
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        background: #c60b0b;
+        color: #fff;
+        width: 20px; /* user requested size */
+        height: 20px; /* user requested size */
+        border-radius: 50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:700;
+        font-size:10px; /* small text to fit */
+        line-height:1;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+        z-index: 10;
+        padding: 0; /* minimize inner white area */
+    }
+    /* limit any icon size inside the badge to match new diameter */
+    .recent-mini-card .discount-badge svg,
+    .recent-mini-card .discount-badge img{
+        width:12px;
+        height:12px;
+        display:block;
+    }
+    .recent-mini-card .mini-thumbs{ display:flex; gap:8px; justify-content:flex-start; margin-top:8px }
+    .recent-mini-card .mini-thumbs img{ width:34px; height:34px; object-fit:cover; border-radius:50%; border:2px solid #fff; box-shadow:0 6px 18px rgba(0,0,0,0.06) }
+
+    /* Hover / focus effects for interactive feel */
+    .recent-mini-card:hover{
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 22px 48px rgba(0,0,0,0.18);
+    }
+    .recent-mini-card:focus-within{
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 18px 40px rgba(0,0,0,0.14);
+    }
+    .recent-mini-card:hover .mini-img img,
+    .recent-mini-card:focus-within .mini-img img{
+        transform: scale(1.06);
+    }
+    .recent-mini-card .discount-badge{
+        transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s cubic-bezier(.2,.9,.2,1), opacity .22s ease;
+    }
+    .recent-mini-card:hover .discount-badge,
+    .recent-mini-card:focus-within .discount-badge{
+        transform: scale(1.06) rotate(-6deg);
+        box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+    }
+
+    /* Reviews block placed between description and related products */
+    &_reviews{
+        width: 100%;
+        padding: 18px calc(50% - 600px);
+        box-sizing: border-box;
+
+        .reviews_top{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            background: #f6f6f6;
+            padding: 22px;
+            border-radius: 8px;
+        }
+
+        .rating-summary{
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+        .rating-summary h3{ margin:0; font-size:20px }
+        .score{ font-size:64px; color:#c60b0b; font-weight:700; line-height:1 }
+        .score span{ font-size:22px; color:#333; margin-left:6px }
+        .stars{ color:#c60b0b; font-size:18px; margin-top:6px }
+        .stars .star{ margin-right:4px }
+        .reviews-count{ display:block; margin-top:6px; color:#333; text-decoration:underline }
+
+        .reviews_cta{ text-align: right }
+        .reviews_cta h4{ margin:0 0 12px 0; font-size:18px }
+        .btn-review{ background:#c60b0b; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-weight:700; cursor:pointer }
+
+        .review-filters{ margin-top:14px; display:flex; gap:12px; flex-wrap:wrap }
+        .chip{ background:#fff; border:1px solid #eee; padding:12px 18px; border-radius:10px; cursor:pointer; font-weight:600 }
+
+        /* Reviews list and individual review styles */
+        .reviews_list{
+            margin-top: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .review_item{
+            background: #fff;
+            border-radius: 8px;
+            padding: 14px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .review_avatar{
+            flex: 0 0 56px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #555;
+        }
+
+        .review_body{
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .review_meta{ display:flex; gap:8px; align-items:center; font-size:13px; color:#666 }
+        .review_meta .phone{ font-weight:700; color:#222 }
+        .review_meta .date{ color:#888 }
+
+        .review_text{ color:#222; line-height:1.5 }
+
+        .review_images{
+            display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;
+        }
+        .review_thumb{
+            width:86px; height:86px; border-radius:8px; overflow:hidden; display:block; flex:0 0 86px; object-fit:cover; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,0.06)
+        }
+
+        /* Owner-only delete button (small, icon-only) */
+        .review_actions{ display:flex; gap:8px; align-items:center }
+        .btn-delete-review{
+            background: transparent;
+            border: none;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .12s ease, transform .06s ease;
+        }
+        .btn-delete-review:hover{ background: rgba(198,11,11,0.08); transform: translateY(-1px) }
+        .btn-delete-review:active{ transform: none }
+        .btn-delete-review[disabled]{ opacity:0.5; cursor:not-allowed }
+        .btn-delete-review img{ width:18px; height:18px; display:block }
+
+        /* Active filter chip */
+        .chip.active{ background: #fff1f1; border-color: rgba(198,11,11,0.18); color:#c60b0b }
+
+        /* Pagination */
+        .reviews_pagination{ display:flex; gap:8px; margin-top:12px; align-items:center }
+        .pgbtn{ background:#fff; border:1px solid #eee; padding:8px 12px; border-radius:8px; cursor:pointer }
+        .pgbtn.active{ background:#c60b0b; color:#fff; border-color:#c60b0b }
+
+        /* Toast for actions like delete/submit */
+        .review_toast{
+            position: fixed;
+            right: 28px;
+            bottom: 28px;
+            background: rgba(0,0,0,0.85);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+            z-index: 20000;
+            font-weight:600;
+            font-size:14px;
         }
     }
 }

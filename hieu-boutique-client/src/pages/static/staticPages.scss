@@ -1,0 +1,400 @@
+.static-page{
+  padding: 8px 0;
+}
+.static-page h1{font-size:28px;margin-bottom:12px}
+.static-page h2{font-size:20px;margin-top:20px;margin-bottom:8px}
+.static-page p, .static-page ul{color:#333;line-height:1.6}
+.static-page ul{margin-left:18px}
+.static-page.container{max-width:1100px;margin:0 auto;padding:0 14px}
+
+/* Policy page: hero + icons + cards */
+.policy-page .policy-hero{position:relative;margin:18px 0 28px;border-radius:10px;overflow:hidden}
+.policy-page .policy-hero img{width:100%;height:260px;object-fit:cover;display:block;filter:brightness(.62)}
+.policy-page .policy-hero_text{position:absolute;left:28px;bottom:22px;color:#fff;text-shadow:0 6px 18px rgba(0,0,0,0.6)}
+.policy-page .policy-hero_text h1{font-size:34px;margin:0 0 6px}
+.policy-page .policy-hero_text p{margin:0;font-size:16px}
+
+.policy-page .payment-icons{display:flex;gap:18px;align-items:center;margin:12px 0 18px}
+.policy-page .payment-icons img{height:48px;object-fit:contain;border-radius:8px;background:#fff;padding:6px;border:1px solid rgba(0,0,0,0.04);box-shadow:0 8px 18px rgba(0,0,0,0.06)}
+
+.policy-page .payment-methods{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:18px;margin:12px 0 20px;align-items:center;justify-items:center}
+.policy-page .payment-methods .method{background:transparent;border-radius:8px;padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.policy-page .payment-methods .method img{max-height:64px;width:auto;object-fit:contain;display:block;background:#fff;padding:8px;border-radius:8px;box-shadow:0 8px 18px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.04)}
+.policy-page .payment-methods .method figcaption{font-size:13px;color:#666;margin-top:8px}
+
+/* Ensure hero paragraph overrides global .static-page p color and appears white on the hero */
+.policy-page .policy-hero .policy-hero_text p{color:#fff}
+
+.policy-page .policy-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:22px 0}
+.policy-page .policy-cards .card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,0.06);text-align:left}
+.policy-page .policy-cards .card img{width:64px;height:64px;object-fit:contain;margin-bottom:8px}
+.policy-page .policy-cards .card h3{margin:8px 0 6px;font-size:18px}
+.policy-page .policy-cards .card p{margin:0;color:#666}
+
+/* Info link cards shown on purchase/privacy pages */
+.policy-links{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:18px 0}
+.policy-links .link-card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:12px;justify-content:space-between}
+.policy-links .link-card h3{margin:0;font-size:18px;color:#111}
+.policy-links .link-card p{margin:0;color:#555;line-height:1.6}
+.policy-links .link-card .btn-link{display:inline-block;margin-top:8px;padding:8px 12px;border-radius:8px;text-decoration:none;color:#c8102e;border:1px solid rgba(200,16,46,0.12);background:transparent;font-weight:700}
+.policy-links .link-card .btn-link:hover{background:rgba(200,16,46,0.06)}
+.policy-links .link-card.active{border:1px solid rgba(200,16,46,0.12);box-shadow:0 16px 36px rgba(200,16,46,0.04)}
+
+@media (max-width:900px){
+  .policy-links{grid-template-columns:1fr}
+}
+
+/* Payment steps card */
+.payment-steps{margin:18px 0;padding:18px}
+.payment-steps .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:12px}
+.payment-steps .step{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:8px;background:#fff;box-shadow:0 8px 18px rgba(0,0,0,0.04)}
+.payment-steps .step img{width:56px;height:56px;object-fit:contain}
+.payment-steps .step p{margin:6px 0 0;color:var(--muted)}
+
+/* Trust logos grid (re-use payment-methods style) */
+.trust-logos{margin:20px 0}
+.trust-logos .trust img{max-height:64px}
+
+/* FAQ */
+.payment-faq{margin:20px 0;padding:18px}
+.payment-faq details{margin-bottom:8px;background:#fff;padding:12px;border-radius:8px;box-shadow:0 8px 18px rgba(0,0,0,0.04)}
+.payment-faq summary{font-weight:700;cursor:pointer}
+.payment-faq p{margin:8px 0 0;color:var(--muted)}
+
+@media (max-width:900px){
+  .policy-page .policy-cards{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:600px){
+  .policy-page .policy-hero img{height:180px}
+  .policy-page .policy-cards{grid-template-columns:1fr}
+  .policy-page .payment-icons{justify-content:flex-start;overflow:auto;padding-bottom:6px}
+}
+
+/* Warranty page specific styles */
+.warranty-page{padding-top:8px}
+.warranty-page h1{font-size:40px;font-weight:800;margin-bottom:12px}
+.warranty-page > p{color:#666;font-size:16px;margin-bottom:22px;max-width:900px}
+
+/* Section headers with small icon on the left (different icon per section) */
+/* Headings with inline icon (better alignment) */
+.warranty-page h2{display:flex;align-items:center;gap:14px;margin-top:18px;margin-bottom:10px;font-size:20px}
+.warranty-page h2::before{content:'';display:inline-block;width:48px;height:48px;background-size:contain;background-repeat:no-repeat;background-position:center;flex:0 0 48px}
+.warranty-page h2:nth-of-type(1)::before{background-image:url('../../assets/imgs/common/return-icon.png')}
+.warranty-page h2:nth-of-type(2)::before{background-image:url('../../assets/imgs/common/ship-icon.png')}
+.warranty-page h2:nth-of-type(3)::before{background-image:url('../../assets/imgs/common/green-star.png')}
+
+/* Make the block following each h2 look like a card */
+.warranty-page h2 + p,
+.warranty-page h2 + ul,
+.warranty-page h2 + p + ul{
+  background:#fff;padding:18px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,0.04);margin-bottom:16px;color:#444;line-height:1.7;
+  /* indent the content so it lines up with the heading text (leaving space for the icon) */
+  margin-left:62px;
+}
+
+.warranty-page ul{margin-left:18px}
+.warranty-page ul li{margin-bottom:8px}
+
+@media (max-width:800px){
+  .warranty-page h2{gap:10px;font-size:18px}
+  .warranty-page h2::before{width:42px;height:42px;flex:0 0 42px}
+  .warranty-page h2 + p,
+  .warranty-page h2 + ul,
+  .warranty-page h2 + p + ul{margin-left:0}
+}
+
+/* layout for warranty row with illustration */
+.warranty-row{display:flex;gap:18px;align-items:center;margin-bottom:18px}
+.warranty-row p{flex:1}
+.warranty-illu{flex:0 0 220px}
+.warranty-illu img{width:100%;height:auto;display:block;border-radius:8px;object-fit:cover}
+
+@media (max-width:800px){
+  .warranty-row{flex-direction:column}
+  .warranty-illu{width:100%;flex:0 0 auto}
+}
+
+/* hero + icons + logos for warranty page (match payment policy look) */
+.warranty-page .policy-hero{position:relative;margin:18px 0 22px;border-radius:10px;overflow:hidden}
+.warranty-page .policy-hero img{width:100%;height:260px;object-fit:cover;display:block;filter:brightness(.6)}
+.warranty-page .policy-hero_text{position:absolute;left:28px;bottom:22px;color:#fff;text-shadow:0 6px 18px rgba(0,0,0,0.6)}
+.warranty-page .policy-hero_text h1{font-size:34px;margin:0 0 6px;color:#fff}
+.warranty-page .policy-hero_text p{margin:0;font-size:16px;color:#fff}
+
+.warranty-icons-row{display:flex;gap:18px;align-items:stretch;margin:18px 0 22px}
+.warranty-icons-row .icon-item{flex:1;background:#fff;border-radius:10px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(0,0,0,0.06)}
+.warranty-icons-row .icon-item img{width:56px;height:56px;object-fit:contain;margin-bottom:10px}
+.warranty-icons-row .icon-item p{margin:0;font-weight:700;color:#222}
+
+.warranty-logos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:18px;margin:12px 0 30px;align-items:center;justify-items:center}
+.warranty-logos-grid .trust{background:transparent;border-radius:8px;padding:12px;text-align:center}
+.warranty-logos-grid .trust img{max-height:64px;width:auto;object-fit:contain;display:block;background:#fff;padding:8px;border-radius:8px;box-shadow:0 8px 18px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.04)}
+
+@media (max-width:600px){
+  .warranty-page .policy-hero img{height:180px}
+  .warranty-icons_row{flex-direction:column}
+  .payment-steps .steps{grid-template-columns:1fr}
+}
+
+
+/* About page specific styles */
+.about-hero{position:relative;margin-bottom:28px}
+.about-hero img{width:100%;height:360px;object-fit:cover;border-radius:6px}
+.about-hero_text{position:absolute;left:24px;bottom:24px;color:#fff;text-shadow:0 3px 10px rgba(0,0,0,0.45)}
+.about-hero_text h1{font-size:36px;margin:0 0 6px}
+.about-hero_text p{margin:0;font-size:16px}
+
+.about-intro{display:flex;gap:24px;align-items:center;margin:36px 0}
+.about-intro_txt{flex:1}
+.about-intro_img{flex:1}
+.about-intro_img img{width:100%;border-radius:6px;object-fit:cover}
+
+.about-values{margin:36px 0}
+.about-values h2{margin-bottom:18px}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.val{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06);padding:14px;text-align:center}
+.val img{width:100%;height:140px;object-fit:cover;border-radius:6px;margin-bottom:10px}
+.val h4{margin:6px 0}
+
+.about-gallery{margin:36px 0}
+.gallery-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.gallery-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:stretch}
+.gallery-item{overflow:hidden;border-radius:8px}
+.gallery-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.gallery-item img:hover{transform:scale(1.04)}
+
+.gallery-item--featured{grid-column:span 3;grid-row:span 2}
+.gallery-item--featured img{height:100%;min-height:320px}
+
+.about-contact{margin:28px 0;padding:18px;background:#f9f9f9;border-radius:6px}
+
+/* Milestones */
+.about-milestones{margin:36px 0}
+.about-milestones h2{margin-bottom:6px}
+.about-milestones .muted{color:#666;margin-bottom:12px}
+.milestones-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.milestone-card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,0.06);display:flex;flex-direction:column}
+.milestone-img{height:160px;overflow:hidden}
+.milestone-img img{width:100%;height:100%;object-fit:cover;display:block}
+.milestone-body{padding:12px}
+.milestone-body h4{margin:0 0 6px;font-size:16px}
+.milestone-body p.small{margin:0;color:#666;font-size:14px}
+
+@media (max-width: 1100px){
+  .milestones-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width: 800px){
+  .milestones-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width: 520px){
+  .milestones-grid{grid-template-columns:1fr}
+  .milestone-img{height:220px}
+}
+
+/* Careers page styles */
+.careers-hero{position:relative;margin-bottom:36px;border-radius:10px;overflow:hidden}
+.careers-hero img{width:100%;height:420px;object-fit:cover;display:block;filter:brightness(.55);transition:transform .7s ease}
+.careers-hero:hover img{transform:scale(1.03)}
+.careers-hero_text{position:absolute;left:6%;top:50%;transform:translateY(-50%);color:#fff;max-width:600px}
+.careers-hero_text h1{font-size:44px;margin:0 0 8px;font-weight:800;letter-spacing:1px;text-shadow:0 8px 18px rgba(0,0,0,0.45)}
+.careers-hero_text .lead{font-size:18px;color:rgba(255,255,255,0.95);margin-bottom:14px}
+.hero-cta{display:flex;gap:12px}
+.hero-cta .btn-apply{background:#c8102e;color:#fff;padding:12px 18px;border-radius:30px;text-decoration:none;font-weight:700;display:inline-block}
+.hero-cta .btn-apply-secondary{background:transparent;border:2px solid rgba(255,255,255,0.9);color:#fff;padding:10px 16px;border-radius:30px;text-decoration:none;font-weight:700}
+
+.company-culture{margin:28px 0}
+.culture-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.culture-card{background:#fff;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.06);overflow:hidden;transition:transform .3s ease,box-shadow .3s ease}
+.culture-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(0,0,0,0.08)}
+.culture-card img{width:100%;height:180px;object-fit:cover}
+.culture-card h4{margin:12px 14px 6px}
+.culture-card p{margin:0 14px 14px;color:#666}
+
+.open-positions{margin:28px 0}
+.jobs-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+.job-card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,0.04);transition:transform .25s ease,box-shadow .25s ease}
+.job-card:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(0,0,0,0.06)}
+.job-card h3{margin-top:0;font-size:20px}
+.job-meta{color:#666;margin-bottom:10px;font-size:14px}
+.job-card ul{margin-left:18px;color:#444}
+.apply-row{display:flex;gap:12px;margin-top:14px}
+.btn-apply{background:#c8102e;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none;font-weight:700}
+.btn-apply-secondary{background:transparent;border:2px solid #c8102e;color:#c8102e;padding:9px 12px;border-radius:8px;text-decoration:none;font-weight:700}
+
+.benefits-process{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:32px 0}
+.benefits ul{margin-left:18px}
+.process ol{margin-left:18px}
+
+.faq details{background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 8px 18px rgba(0,0,0,0.04)}
+.faq summary{font-weight:700;cursor:pointer}
+
+.contact-hr{margin:10px 0;padding:10px;background:#f6f6f6;border-radius:10px}
+
+/* VIP page styles */
+.vip-page{padding-bottom:20px}
+.vip-hero{background:linear-gradient(90deg, rgba(200,16,46,0.05), rgba(255,255,255,0));padding:12px;border-radius:10px;margin-bottom:6px}
+.vip-hero_inner{max-width:1000px;margin:0 auto}
+.vip-hero h1{font-size:32px;color:#c8102e;margin-bottom:6px}
+.vip-hero .lead{font-size:16px;color:#333;margin-bottom:10px}
+.vip-hero_cta{display:flex;gap:10px;align-items:center}
+
+.vip-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.vip-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,0.05);display:flex;flex-direction:column;transition:transform .22s ease,box-shadow .22s ease}
+.vip-card:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,0.07)}
+.vip-card_media img{width:100%;height:320px;object-fit:cover;display:block;background:#fbfbfb;padding:6px;border-radius:6px}
+.vip-card_body{padding:12px;flex:1;display:flex;flex-direction:column}
+.vip-card_body h3{margin:0 0 8px;font-size:20px}
+.vip-range{color:#666;margin-bottom:10px}
+.vip-card_body ul{margin-left:16px;color:#444;flex:1}
+.vip-card{opacity:0;transform:translateY(8px);animation:vipFade .42s ease forwards}
+.vip-card:nth-child(1){animation-delay:.08s}
+.vip-card:nth-child(2){animation-delay:.16s}
+.vip-card:nth-child(3){animation-delay:.24s}
+
+/* Active user tier */
+.vip-card--active{border:2px solid #c8102e;box-shadow:0 20px 50px rgba(200,16,46,0.10);transform:translateY(-6px) !important}
+.vip-card--active .vip-card_body h3{color:#c8102e}
+.tier-badge{display:inline-block;background:#c8102e;color:#fff;padding:6px 10px;border-radius:18px;font-weight:800;font-size:13px;margin-bottom:8px}
+
+/* user info panel in VIP hero */
+.vip-user-panel{display:flex;align-items:center;gap:14px;margin-top:10px;justify-content:space-between}
+.vip-user-avatar{width:78px;height:78px;border-radius:50%;overflow:hidden;border:3px solid #c8102e;box-shadow:0 8px 20px rgba(200,16,46,0.12)}
+.vip-user-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.vip-user-info{display:flex;flex-direction:column;flex:1;margin-left:12px}
+.vip-card-preview{margin-left:8px;align-self:center;flex:0 0 auto}
+.vip-card-preview img{width:200px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #eee;box-shadow:0 8px 18px rgba(0,0,0,0.05)}
+
+/* detail button on card */
+.btn-detail{background:transparent;border:1px solid rgba(200,16,46,0.12);padding:8px 12px;border-radius:8px;font-weight:800;color:#c8102e;margin-bottom:10px;cursor:pointer}
+
+/* VIP hero primary buttons larger */
+.vip-hero .btn-apply{background:#c8102e;color:#fff;padding:14px 22px;border-radius:30px;text-decoration:none;font-weight:800;display:inline-block;font-size:16px}
+.vip-hero .btn-apply-secondary{background:transparent;border:2px solid #c8102e;color:#c8102e;padding:12px 18px;border-radius:30px;text-decoration:none;font-weight:800;font-size:15px}
+
+/* Card modal */
+.card-modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1200}
+.card-modal_backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.45)}
+.card-modal_content{position:relative;background:#fff;border-radius:10px;box-shadow:0 26px 70px rgba(0,0,0,0.28);max-width:1100px;width:94%;display:flex;gap:20px;z-index:2;padding:18px}
+.card-modal_close{position:absolute;right:12px;top:12px;border:0;background:transparent;font-size:20px;cursor:pointer}
+.card-modal_media img{width:360px;height:auto;object-fit:contain;border-radius:8px;border:1px solid #eee;background:#fafafa;padding:10px}
+.card-modal_body{flex:1}
+.card-modal_body h3{margin-top:0;color:#c8102e}
+.card-modal_body ul{margin-left:16px}
+
+@media (max-width:800px){
+  .card-modal_content{flex-direction:column;align-items:center}
+  .card-modal_media img{width:80%}
+}
+
+@media (max-width:800px){
+  .vip-user-panel{flex-direction:column;align-items:flex-start}
+  .vip-card-preview{margin-left:0}
+}
+
+/* VIP showcase (three large card images) */
+.vip-showcase{margin:8px 0;padding:8px 0;background:transparent;border-radius:8px}
+.vip-intro{margin-top:6px;margin-bottom:4px}
+.vip-showcase .showcase-inner{max-width:1100px;margin:0 auto}
+.showcase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.showcase-item{background:#fff;border-radius:12px;overflow:hidden;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,0.04);transition:transform .16s ease,box-shadow .16s ease;display:flex;flex-direction:column;align-items:center}
+.showcase-item:hover{transform:translateY(-5px);box-shadow:0 16px 40px rgba(0,0,0,0.07)}
+.showcase-item img{width:100%;height:260px;object-fit:cover;display:block}
+.showcase-item figcaption{padding:12px 10px 16px;font-weight:700;color:#c8102e}
+
+@media (max-width:1000px){
+  .showcase-grid{grid-template-columns:repeat(2,1fr)}
+  .showcase-item img{height:260px}
+}
+@media (max-width:600px){
+  .showcase-grid{grid-template-columns:1fr}
+  .showcase-item img{height:200px}
+}
+
+.benefit-ico{width:20px;height:20px;margin-right:8px;vertical-align:middle}
+.vip-card_body li{display:flex;align-items:center;padding:6px 0}
+
+/* comparison table */
+.vip-compare{margin-top:6px}
+.compare-wrap{overflow:auto;border-radius:8px}
+.compare-table{width:100%;border-collapse:collapse;margin-top:6px}
+.compare-table th,.compare-table td{padding:8px 10px;border:1px solid #eee;text-align:left}
+.compare-table thead th{background:#faf6f6;color:#c8102e;font-weight:800}
+.compare-table tbody tr:nth-child(even){background:#fbfbfb}
+
+.vip-cta-row{display:flex;gap:10px;margin-top:12px}
+.btn-apply.small{padding:8px 12px;border-radius:8px}
+.btn-apply-secondary.small{padding:7px 10px;border-radius:8px}
+
+.vip-details h4{margin-top:8px}
+
+@media (max-width: 1000px){
+  .vip-cards{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width: 600px){
+  .vip-cards{grid-template-columns:1fr}
+  .vip-hero h1{font-size:28px}
+  .vip-hero .lead{font-size:15px}
+}
+
+@media (max-width: 900px){
+  .careers-hero img{height:320px}
+  .careers-hero_text{left:5%;top:48%}
+  .culture-grid{grid-template-columns:repeat(2,1fr)}
+  .jobs-grid{grid-template-columns:1fr}
+  .benefits-process{grid-template-columns:1fr}
+}
+
+@media (max-width:520px){
+  .careers-hero img{height:260px}
+  .careers-hero_text{position:relative;left:0;transform:none;padding:18px;color:#222;background:linear-gradient(#fff,#fff);margin-top:-60px;border-radius:8px}
+  .careers-hero_text h1{color:#c8102e}
+  .culture-grid{grid-template-columns:1fr}
+}
+
+/* Special timeline (horizontal) */
+.about-timeline{margin:48px 0;padding:18px 6px;background:linear-gradient(#fff,#fff);border-radius:8px}
+.about-timeline h2{text-align:center;color:#c8102e;font-size:32px;margin-bottom:10px}
+.timeline-wrap{position:relative;padding:30px 8px 10px}
+.timeline-line{position:absolute;left:4%;right:4%;top:70px;height:4px;border-top:4px dashed #c8102e;opacity:0.9}
+.timeline-items{display:flex;justify-content:space-between;gap:12px;position:relative;z-index:2;padding-top:8px}
+.timeline-item{flex:1;min-width:120px;text-align:center;position:relative;padding:10px 6px}
+.timeline-icon{width:56px;height:56px;border-radius:50%;background:#fff;border:4px solid #c8102e;display:inline-flex;align-items:center;justify-content:center;margin:0 auto 8px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+.timeline-dot{width:14px;height:14px;background:#c8102e;border-radius:50%;margin:6px auto 10px;box-shadow:0 4px 10px rgba(200,16,46,0.18)}
+.timeline-content{padding:6px 6px}
+.timeline-date{font-weight:800;font-size:28px;color:#111;margin-bottom:6px}
+.timeline-title{font-weight:700;margin-bottom:6px}
+.timeline-desc{color:#666}
+
+@media (max-width: 900px){
+  .timeline-line{top:110px}
+  .timeline-items{gap:18px}
+  .timeline-icon{width:48px;height:48px}
+  .timeline-date{font-size:22px}
+}
+
+@media (max-width: 600px){
+  .timeline-items{flex-direction:column;align-items:stretch}
+  .timeline-line{display:none}
+  .timeline-item{display:flex;gap:12px;align-items:center;padding:12px;background:#fff;border-radius:8px;margin-bottom:12px}
+  .timeline-icon{flex:0 0 64px;margin:0}
+  .timeline-content{text-align:left}
+}
+
+@media (max-width: 1100px){
+  .gallery-item--featured{grid-column:span 4}
+}
+
+@media (max-width: 900px){
+  .about-hero img{height:260px}
+  .about-intro{flex-direction:column}
+  .values-grid{grid-template-columns:repeat(2,1fr)}
+  .gallery-grid{grid-template-columns:repeat(3,1fr)}
+  .gallery-item--featured{grid-column:span 3}
+}
+
+@media (max-width: 520px){
+  .about-hero_text h1{font-size:22px}
+  .values-grid{grid-template-columns:1fr}
+  .gallery-grid{grid-template-columns:repeat(2,1fr)}
+  .gallery-item--featured{grid-column:span 2}
+}

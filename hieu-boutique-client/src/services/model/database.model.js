@@ -112,12 +112,12 @@ const hieuProjectDB = {
     //         "id": 1,
     //         "username": "user01",
     //         "password": "user01",
-    //         "name": "Ngọ Văn Long",
+    //         "name": "Nguyễn Vinh Hiếu",
     //         "sex": "male",
-    //         "birthday": "1880-01-01",
-    //         "email": "user01@gmail.com",
-    //         "phoneNumber": "0111222333",
-    //         "address": "Phường 6, quận Gò vấp, tp. Hồ Chí Minh",
+    //         "birthday": "2002-08-07",
+    //         "email": "nvhieu.20it10@vku.udn.vn",
+    //         "phoneNumber": "0869600976",
+    //         "address": "Phường Thanh Khê, quận Thanh Khê, tp. Đà Nẵng",
     //         "role": "user",
     //         "order": [
     //                     {
@@ -1325,7 +1325,7 @@ const hieuProjectDB = {
         "img2": slide12,
         "img3": slide13,
         "title": "Ngọc Điểm Nghênh Xuân",
-        "des": `Đất trời chuyển giao đón nắng Xuân mới, những đóa hoa tinh khiết chờ gió Xuân đua nở chính là cảm hứng để chúng tôi giới thiệu tới phái đẹp Việt BST Áo dài Tết 2024 với tên gọi: "NGỌC ĐIỂM NGHÊNH XUÂN" , ý niệm chúc mỗi người phụ nữ diện lên mình tà Áo dài Ngọc Điểm đều "đẹp tựa hoa" - một vẻ đẹp yêu kiều, toát lên vẻ thanh tú, sang trọng không thể rời mắt.`
+        "des": `Đất trời chuyển giao đón nắng Xuân mới, những đóa hoa tinh khiết chờ gió Xuân đua nở chính là cảm hứng để chúng tôi giới thiệu tới phái đẹp Việt BST Áo dài Tết 2026 với tên gọi: "NGỌC ĐIỂM NGHÊNH XUÂN" , ý niệm chúc mỗi người phụ nữ diện lên mình tà Áo dài Ngọc Điểm đều "đẹp tựa hoa" - một vẻ đẹp yêu kiều, toát lên vẻ thanh tú, sang trọng không thể rời mắt.`
     }
 }
 

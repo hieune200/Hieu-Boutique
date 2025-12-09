@@ -1,0 +1,48 @@
+/* Global theme variables for Hieu Boutique */
+/* SCSS breakpoint variables and a small responsive mixin are provided
+   so page-level styles can use consistent breakpoints. These are
+   imported before other styles in `main.scss` so mixins are available. */
+$bp-lg: 1200px;
+$bp-md: 900px;
+$bp-sm: 700px;
+$bp-xs: 480px;
+
+@mixin mq-max($px){ @media (max-width: $px){ @content } }
+
+:root{
+  --brand-red: #c8102e; /* primary brand color */
+  --brand-red-soft: #e86b6f;
+  --brand-dark: #111217;
+  --muted: #666666;
+  --bg: #ffffff;
+  --card-bg: #ffffff;
+  --radius: 10px;
+  --shadow-strong: 0 18px 40px rgba(0,0,0,0.08);
+  --shadow-soft: 0 8px 18px rgba(0,0,0,0.06);
+  --max-width: 1100px;
+  --bp-lg: #{$bp-lg};
+  --bp-md: #{$bp-md};
+  --bp-sm: #{$bp-sm};
+  --bp-xs: #{$bp-xs};
+}
+
+/* Typography scale */
+body{color:var(--brand-dark)}
+h1,h2,h3{color:var(--brand-dark)}
+
+/* Utility tokens */
+.btn-primary{background:var(--brand-red);color:#fff;border-radius:22px;padding:10px 18px;display:inline-block;font-weight:700;border:0;cursor:pointer}
+.btn-secondary{background:transparent;border:1px solid rgba(0,0,0,0.06);color:var(--brand-dark);padding:8px 14px;border-radius:8px}
+.card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow-soft);padding:16px}
+.site-hero{border-radius:12px;overflow:hidden;position:relative}
+.site-hero img{width:100%;height:320px;object-fit:cover;display:block;filter:brightness(.64)}
+.site-hero .hero-text{position:absolute;left:28px;bottom:28px;color:#fff;text-shadow:0 8px 26px rgba(0,0,0,0.6)}
+
+.icon-inline{display:inline-flex;align-items:center;gap:8px}
+
+/* Responsive container */
+.container{max-width:var(--max-width);margin:0 auto;padding:0 14px;box-sizing:border-box}
+
+/* Helpful utility: centered inner content that respects the site max width
+  and provides consistent horizontal spacing on very wide screens. */
+.content-inner{max-width:var(--max-width);margin:0 auto;padding:0 14px;box-sizing:border-box}

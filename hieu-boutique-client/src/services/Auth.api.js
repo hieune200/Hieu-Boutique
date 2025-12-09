@@ -1,6 +1,13 @@
 
-// const url = "http://localhost:3000/auth"
-const url = "https://hieu-boutique-ignh6o5b0-hieunguyens-projects-2184091d.vercel.app/auth"
+// Normalize server base so missing host/colon-only values won't produce invalid URLs in the browser
+let SERVER_BASE = import.meta.env.VITE_SERVER_BASE || 'http://localhost:3000'
+if (typeof SERVER_BASE === 'string') {
+    const s = SERVER_BASE.trim()
+    if (s === '') SERVER_BASE = 'http://localhost:3000'
+    else if (s.startsWith(':')) SERVER_BASE = `http://localhost${s}`
+    else if (s.startsWith('//')) SERVER_BASE = `http:${s}`
+}
+const url = `${SERVER_BASE}/auth`
 
 async function registerAPI (data) {
     const res = await fetch(`${url}/register`, {
@@ -25,11 +32,16 @@ async function loginAPI (data){
 }
 
 async function getInfor (){
-    const ObjectId = sessionStorage.getItem("userID")
-    const res = await fetch(`${url}/user/${ObjectId}`)
-    .then(res => res.json())
-    .catch(err=> console.log(err))
-    return res
+    const ObjectId = localStorage.getItem("userID") || sessionStorage.getItem("userID")
+    try{
+        const r = await fetch(`${url}/user/${ObjectId}`)
+        if (!r) return { status: 500, message: 'No response from server' }
+        const json = await r.json()
+        return json
+    } catch (err){
+        console.error('getInfor error', err)
+        return { status: 500, message: 'Network error' }
+    }
 }
 
 async function updateInfor (data){
@@ -44,7 +56,7 @@ async function updateInfor (data){
 }
 
 async function checkoutAPI (data){
-    const id = sessionStorage.getItem("userID")
+    const id = localStorage.getItem("userID") || sessionStorage.getItem("userID")
     const res = await fetch(`${url}/checkout/`,{
         method: "POST",
         headers:{
@@ -59,11 +71,67 @@ async function checkoutAPI (data){
 }
 
 async function getOrder (){
-    const id = sessionStorage.getItem("userID")
+    const id = localStorage.getItem("userID") || sessionStorage.getItem("userID")
     const res = await fetch(`${url}/order/list/${id}`)
     .then(res => res.json())
     .catch(err=> console.log(err))
     return res
 }
 
-export { registerAPI, loginAPI, getInfor, updateInfor, checkoutAPI, getOrder };
+async function socialLoginAPI (data){
+    try{
+        const r = await fetch(`${url}/social`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        if (!r) return { status: 500, message: 'No response from server' }
+        // r.json() may return an object with status as string; normalize
+        const json = await r.json()
+        return json
+    } catch (err){
+        console.error('socialLoginAPI error', err)
+        return { status: 500, message: 'Network error' }
+    }
+}
+
+async function forgotPasswordRequest (data){
+    try{
+        const r = await fetch(`${url}/forgot`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        if (!r) return { status: 500, message: 'No response from server' }
+        return await r.json()
+    } catch (err){ console.error('forgotPasswordRequest error', err); return { status: 500, message: 'Network error' } }
+}
+
+async function resetPassword (data){
+    try{
+        const r = await fetch(`${url}/reset`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        if (!r) return { status: 500, message: 'No response from server' }
+        return await r.json()
+    } catch (err){ console.error('resetPassword error', err); return { status: 500, message: 'Network error' } }
+}
+
+async function createSocialPlaceholderAPI (data){
+    try{
+        const r = await fetch(`${url}/social/placeholder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        if (!r) return { status: 500, message: 'No response from server' }
+        return await r.json()
+    } catch (err){
+        console.error('createSocialPlaceholderAPI error', err)
+        return { status: 500, message: 'Network error' }
+    }
+}
+
+export { registerAPI, loginAPI, getInfor, updateInfor, checkoutAPI, getOrder, socialLoginAPI, createSocialPlaceholderAPI, forgotPasswordRequest, resetPassword };
