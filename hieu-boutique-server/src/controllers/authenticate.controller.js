@@ -168,20 +168,17 @@ async function addNewOrder (req, res, next){
 
         if (!productsCollection) throw new Error('Products collection unavailable')
 
-        // gather product ids and validate availability
-        // Use the ESM-imported ObjectId (imported at top) instead of CommonJS `require`
+        // gather product ids
         const ids = items.map(it => {
             try{ return new ObjectId(String(it.id)) }catch(e){ return null }
         }).filter(Boolean)
 
-        // fetch products
+        // fetch products to ensure they exist (do not rely on their warehouse field here)
         const products = await productsCollection.find({ _id: { $in: ids } }).toArray()
-
-        // map by string id
         const prodMap = {}
         products.forEach(p => { prodMap[p._id.toString()] = p })
 
-        // check availability
+        // basic validation: quantities and existence only
         for (const it of items){
             const pid = String(it.id || '')
             const qty = Math.max(0, Number(it.quantity) || 0)
@@ -192,11 +189,6 @@ async function addNewOrder (req, res, next){
             const prod = prodMap[pid]
             if (!prod){
                 req.data = { status: '404', message: `Sản phẩm không tồn tại: ${pid}` }
-                return next()
-            }
-            const available = Number(prod.warehouse || 0)
-            if (available < qty){
-                req.data = { status: '409', message: `Sản phẩm ${prod.title || prod._id} không đủ trong kho` }
                 return next()
             }
         }
@@ -214,9 +206,10 @@ async function addNewOrder (req, res, next){
                 )
                 if (!upd.value){
                     // rollback previous successful updates
-                        for (const u of updates){
+                    for (const u of updates){
                         try{ await productsCollection.updateOne({ _id: new ObjectId(u.id) }, { $inc: { warehouse: u.qty, sold: -u.qty } }) }catch(e){}
                     }
+                    logger.warn('product not available during atomic update', { pid, qty })
                     req.data = { status: '409', message: 'Một số sản phẩm không đủ kho khi xử lý đơn hàng. Vui lòng thử lại.' }
                     return next()
                 }
