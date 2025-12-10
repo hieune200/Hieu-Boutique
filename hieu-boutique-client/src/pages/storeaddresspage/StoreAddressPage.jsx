@@ -37,7 +37,7 @@ function FlyTo({ position }){
 }
 
 const StoreAddressPage = () => {
-    window.scrollTo({top: 0, behavior: 'smooth'})
+    useEffect(()=>{ window.scrollTo({top: 0, behavior: 'smooth'}) }, [])
 
     // center of the city (adjust as you like)
     const center = { lat: 21.273, lng: 106.071 }

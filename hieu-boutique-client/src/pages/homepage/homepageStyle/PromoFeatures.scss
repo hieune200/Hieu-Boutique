@@ -76,6 +76,71 @@
     animation: popIn .18s ease both
   }
 
+  /* Vouchers (under coupons-row) styling: stacked full-width voucher cards */
+  .vouchers{
+    max-width:1200px;
+    margin: 12px auto 0;
+    .vouchers-label{ color:#222; margin:0 auto 18px; font-size:20px; font-weight:700; text-align:center }
+    .vouchers-top{ display:flex; align-items:center; justify-content:space-between; gap:16px }
+    .voucher-input{ display:flex; gap:10px; align-items:center }
+    .voucher-input input{ padding:12px 14px; border-radius:10px; border:1px solid #eee; min-width:320px; font-size:15px }
+    .voucher-input .apply{ background:#c62828; color:#fff; border:none; padding:12px 18px; border-radius:10px; font-weight:800; cursor:pointer }
+    .voucher-input .apply[disabled]{ opacity:0.5; cursor:not-allowed }
+    .voucher-input .input-status{ margin-left:8px; color:#666; font-size:13px; display:flex; align-items:center; gap:6px }
+    .voucher-input.valid input{ border-color:#c6f6d5 }
+    .voucher-input.invalid input{ border-color:#ffd6d6 }
+    .voucher-input .msg{ color:inherit }
+
+    .used-coupons{ margin-top:14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .used-coupons .chip{ background:#f5f5f5; padding:8px 10px; border-radius:20px; font-weight:700; border:1px solid #eee }
+
+    .voucher-list{ display:flex; flex-direction:column; gap:12px; }
+
+    .voucher{ display:flex; align-items:center; gap:12px; background:#fff; border-radius:12px; padding:12px; border:1px solid rgba(0,0,0,0.04); box-shadow:0 8px 18px rgba(0,0,0,0.04); transition:transform .12s ease,box-shadow .12s ease; width:100%; min-height:84px; position:relative }
+    .voucher:hover{ transform: translateY(-4px); box-shadow:0 12px 28px rgba(0,0,0,0.06) }
+    .voucher img{ width:72px; height:72px; object-fit:cover; border-radius:10px; border:1px solid rgba(0,0,0,0.03) }
+    .voucher .voucher-meta{ display:flex; flex-direction:column; align-items:flex-start; justify-content:center; flex:1 }
+    .voucher .voucher-meta .title{ font-weight:800; font-size:18px; line-height:1.1; color:#111 }
+    .voucher .voucher-meta .sub{ color:#666; font-size:12px; margin-top:4px }
+    .voucher .voucher-meta .code{ opacity:0.95; font-size:13px; margin-top:6px; font-weight:800 }
+    .voucher .voucher-meta .expiry{ color:#888; font-size:12px; margin-top:6px }
+    .voucher .voucher-actions{ margin-left:auto; display:flex; gap:10px; align-items:center }
+    .voucher .voucher-actions button{ min-width:90px; padding:8px 12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px }
+    .voucher .voucher-actions .apply{ background:#c62828; color:#fff; border:none; box-shadow:0 4px 12px rgba(198,40,40,0.10) }
+    .voucher .voucher-actions .copy{ background:#fff; border:1px solid #eee; color:#222 }
+
+    /* make the title visually centered relative to image when space allows */
+    .voucher .voucher-meta { padding-left:6px }
+
+    @media (max-width: 900px){
+      .vouchers-label{ text-align:left; margin-left:6px }
+      .voucher{ padding:10px; min-height:unset; gap:10px }
+      .voucher img{ width:64px; height:64px }
+      .voucher .voucher-meta .title{ font-size:16px }
+      .voucher .voucher-actions button{ min-width:84px; padding:8px 10px }
+    }
+
+    /* voucher-manual removed per UX: manual input moved/disabled */
+  }
+
+  /* Voucher modal */
+  .voucher-modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:1200 }
+  .voucher-modal{ background:#fff; padding:20px; border-radius:12px; width:min(720px, 96%); box-shadow:0 30px 80px rgba(0,0,0,0.3) }
+  .voucher-modal .modal-top{ display:flex; gap:16px; align-items:center }
+  .voucher-modal img{ width:120px; height:120px; object-fit:cover; border-radius:10px }
+  .voucher-modal .modal-meta h3{ margin:0; font-size:20px }
+  .voucher-modal .modal-meta .sub{ color:#666; margin-top:6px }
+  .voucher-modal .modal-code{ margin-top:16px; display:flex; flex-direction:column; gap:6px }
+  .voucher-modal .code-value{ font-size:22px; font-weight:900; letter-spacing:2px }
+  .voucher-modal .modal-actions{ margin-top:16px; display:flex; gap:10px; justify-content:flex-end }
+  .voucher-modal .modal-actions button{ padding:10px 14px; border-radius:8px; cursor:pointer }
+  .voucher-modal .modal-actions .apply{ background:#c62828; color:#fff; border:none }
+  .voucher-modal .modal-actions .copy{ background:#fff; border:1px solid #eee }
+  .voucher-modal .modal-actions .close{ background:#fff; border:1px solid #ddd }
+
+  .applied-tag{ position:absolute; top:10px; right:10px; background:#e8f5e9; color:#2e7d32; padding:6px 8px; border-radius:8px; font-weight:800; font-size:12px }
+  .applied-tag.expired{ background:#fff3e0; color:#ef6c00 }
+
   /* Feature icons row (under coupons) */
   .feature-icons{
     max-width: 1200px;

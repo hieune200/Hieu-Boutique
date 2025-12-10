@@ -1,6 +1,7 @@
 
 import './contactspage.scss'
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 import InfoIcon from '../../components/icons/InfoIcon'
 import ShippingIcon from '../../components/icons/ShippingIcon'
 import FaqIcon from '../../components/icons/FaqIcon'
@@ -11,7 +12,7 @@ import decor2 from '../../assets/imgs/home/coll3.png'
 import decor3 from '../../assets/imgs/sanphamnoibat/aosomitrang.jpg'
 
 const ContactsPage = () => {
-    window.scrollTo({top: '0', behavior: 'smooth'})
+    useEffect(()=>{ window.scrollTo({top: '0', behavior: 'smooth'}) }, [])
 
     const infoItems = [
         { id: 'about', title: 'Giới thiệu về Hieu Boutique', to: '/about', Icon: InfoIcon },

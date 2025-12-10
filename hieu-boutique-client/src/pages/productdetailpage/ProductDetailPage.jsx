@@ -804,7 +804,7 @@ const ProductDetailPage = ()=>{
                     })()}
 
                     <div className="vouchers">
-                        <div className="vouchers-label">Voucher giảm giá:</div>
+                        <div className="vouchers-label">VOUCHER GIẢM GIÁ</div>
                         <div className="voucher-list">
                             <button className="voucher" onClick={()=> openVoucherModal('GIAM50K')}>
                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">

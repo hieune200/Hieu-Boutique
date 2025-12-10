@@ -212,6 +212,9 @@ body.header-hidden .header{
     border:3px solid #fff;
 }
 
+/* coupon badge sits near the cart icon; ignore pointer events so clicks hit the cart button underneath */
+/* coupon badge removed from header - coupon displayed in cart/checkout instead */
+
 /* Small pulsing dot (use when there is no numeric count) */
 .feature_notif .notif-dot{ position:absolute; top:8px; right:8px; width:10px; height:10px; background:var(--brand-red,#c62828); border-radius:50%; box-shadow:0 6px 18px rgba(198,40,40,0.16); border:2px solid #fff; animation: notif-pulse 1.6s infinite; }
 

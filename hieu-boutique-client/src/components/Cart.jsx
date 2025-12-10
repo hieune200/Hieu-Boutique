@@ -22,9 +22,10 @@ const Cart = ({ setCartControl })=>{
     const itemCount = Array.isArray(cartData) && cartData.length ? cartData.reduce((a,e)=>a+(e.quantity||1),0) : 0
     const SHIPPING_THRESHOLD = 499000
     const DEFAULT_SHIPPING_FEE = 25000
-    const discount = appliedCoupon ? (appliedCoupon.discount || 0) : 0
-    const afterDiscount = Math.max(0, subtotal - discount)
-    // Apply shipping waiver based on amount after discount
+    // Do not apply coupon discount in the cart preview — only at checkout
+    const previewDiscount = 0
+    const afterDiscount = subtotal // keep subtotal unchanged for preview calculations
+    // Apply shipping waiver based on subtotal (discount applied at checkout only)
     const shippingFee = afterDiscount >= SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE
     const finalTotal = afterDiscount + shippingFee
 
@@ -97,7 +98,7 @@ const Cart = ({ setCartControl })=>{
                                     </div>
                                     <div className="line">
                                         <span className="label">Giảm giá</span>
-                                        <span className="amount">{discount ? `- ${discount.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}` : '0 VND'}</span>
+                                        <span className="amount">{appliedCoupon ? `${appliedCoupon.code} (áp dụng khi thanh toán)` : '0 VND'}</span>
                                     </div>
                                     <div className="line">
                                         <span className="label">Phí giao hàng</span>
@@ -111,8 +112,8 @@ const Cart = ({ setCartControl })=>{
                                 </div>
 
                                 <div className="actions">
-                                    <Link to="/" className="btn secondary small pointer unselect" onClick={() => {setCartControl(false)}}>Trở về trang chủ</Link>
-                                    <Link to="/checkout" className="btn primary small pointer unselect" onClick={() => {setCartControl(false)}}>Xác nhận đặt hàng</Link>
+                                    <Link to="/" className="btn secondary small pointer unselect" onClick={() => {setCartControl(false)}}>Trang chủ</Link>
+                                    <Link to="/checkout" className="btn primary small pointer unselect" onClick={() => {setCartControl(false)}}>Đặt hàng</Link>
                                 </div>
                             </div>
                         </div>

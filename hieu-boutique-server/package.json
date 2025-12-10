@@ -9,7 +9,8 @@
     "start": "nodemon ./index.js",
     "seed:seasonal": "node ./scripts/updateSeasonalProducts.js",
     "create:seasonal:unique": "node ./scripts/createUniqueSeasonalProducts.js",
-    "seed:collection:thu-dong": "node ./scripts/seedCollectionDoc.js"
+    "seed:collection:thu-dong": "node ./scripts/seedCollectionDoc.js",
+    "seed:coupons": "node ./scripts/seedCoupons.js"
   },
   "author": "vinhhieu0807",
   "license": "ISC",

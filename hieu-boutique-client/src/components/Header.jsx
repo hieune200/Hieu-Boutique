@@ -444,18 +444,16 @@ const Header = ()=>{
                     }
                 </div>
                 <div className="feature_cart">
-                                        <div className="cart-wrap feature_btn feature_icon_box pointer">
-                                            <div style={{position:'relative'}}>
-                                                <img src={cartIcon} alt="cart" className='feature-img pointer' onClick={()=>handleCartControl()}/>
-                                                { cartCount > 0 && (
-                                                    <div className="cart-count-badge" aria-hidden>{cartCount>99? '99+': cartCount}</div>
-                                                ) }
-                                            </div>
-                                            {appliedCoupon && (
-                                                <div className="coupon-badge" title={`Mã áp dụng: ${appliedCoupon.code}`}>{appliedCoupon.code}</div>
-                                            )}
-                                        </div>
-                                </div>
+                    <div className="cart-wrap feature_btn feature_icon_box pointer" onClick={()=>handleCartControl()} role="button" aria-label="Mở giỏ hàng">
+                        <div style={{position:'relative'}}>
+                            <img src={cartIcon} alt="cart" className='feature-img pointer'/>
+                            { cartCount > 0 && (
+                                <div className="cart-count-badge" aria-hidden>{cartCount>99? '99+': cartCount}</div>
+                            ) }
+                        </div>
+                        {/* applied coupon shown on the cart/checkout page instead of header */}
+                    </div>
+                </div>
                 <div className="feature_notif feature_btn pointer" onClick={async ()=> {
                     // open panel for both logged-in and not-logged-in users
                     setNotifOpen(v=>!v)

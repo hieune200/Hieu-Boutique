@@ -8,7 +8,7 @@ import './newspageStyle/newspage.scss'
 const NewsPage = ()=>{
     useEffect(()=>{
         window.scrollTo({top: 0, behavior: 'smooth'})
-    })
+    }, [])
 
     return(
         <main className="newspage">

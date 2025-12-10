@@ -8,6 +8,7 @@ let client = null;
 let _collections = {
     products: null,
     accounts: null,
+    coupons: null,
     hotProducts: null,
     collections: null,
     comments: null,
@@ -27,6 +28,7 @@ async function connectWithRetry(maxRetries = 5, baseDelay = 500) {
             const db = client.db(MONGO_DB);
             _collections.products = db.collection('products');
             _collections.accounts = db.collection('accounts');
+            _collections.coupons = db.collection('coupons');
             _collections.hotProducts = db.collection('hotProducts');
             _collections.collections = db.collection('collections');
             _collections.comments = db.collection('comments');
@@ -93,8 +95,9 @@ async function initMongo(){
 
 function getProductsCollection() { return _collections.products; }
 function getAccountsCollection() { return _collections.accounts; }
+function getCouponsCollection() { return _collections.coupons; }
 function getHotProductsCollection() { return _collections.hotProducts; }
 function getCollectionsCollection() { return _collections.collections; }
 function getCommentsCollection() { return _collections.comments }
 
-export { client, ensureConnected, getProductsCollection, getAccountsCollection, getHotProductsCollection, getCollectionsCollection, getCommentsCollection };
+export { client, ensureConnected, getProductsCollection, getAccountsCollection, getCouponsCollection, getHotProductsCollection, getCollectionsCollection, getCommentsCollection };

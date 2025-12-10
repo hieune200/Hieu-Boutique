@@ -52,7 +52,7 @@
     .summary-row{ display:flex; justify-content:space-between; padding:8px 0 }
     .total-row{ display:flex; justify-content:space-between; padding-top:12px; font-weight:700; font-size:18px }
 
-    .btn{ border:0; padding:10px 14px; border-radius:8px; cursor:pointer }
+    .btn{ border:0; padding:10px 14px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; line-height:1; }
     .btn.primary{ background:#e53935; color:#fff }
     .btn.ghost{ background:#f3f3f3 }
   }

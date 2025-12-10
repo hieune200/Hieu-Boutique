@@ -1,9 +1,12 @@
 import { ObjectId } from "mongodb"
 import bcrypt from "bcrypt"
 
-import { ensureConnected, getAccountsCollection } from "../models/mongoClient.model.js"
+import { ensureConnected, getAccountsCollection, getProductsCollection, getCouponsCollection, getGuestOrdersCollection } from "../models/mongoClient.model.js"
 import { userSchema } from "../models/mongoSchema.model.js"
 import JWT from 'jsonwebtoken'
+import { makeServerError, makeServerErrorDirect } from "../utils/errorHelper.js"
+import { sendOrderConfirmationEmail, notifyAdminOfOrder } from "../utils/mailer.js"
+import logger from "../utils/logger.js"
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret'
 
@@ -37,11 +40,8 @@ async function registerNewUser (req, res, next) {
             message: "Tài khoản đã được tạo thành công",
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ"
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -79,11 +79,8 @@ async function checkLogin (req, res, next){
         }
         next()
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ"
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
         next()
     }
 }
@@ -103,7 +100,8 @@ async function getUserInfor (req, res, next){
             phoneNumber: getInfor?.phoneNumber,
             address: getInfor?.address,
             sex: getInfor?.sex,
-            avatar: getInfor?.avatar || '/ava.svg'
+            avatar: getInfor?.avatar || '/ava.svg',
+            usedCoupons: Array.isArray(getInfor?.usedCoupons) ? getInfor.usedCoupons : []
         }
         req.data = {
             status: "201",
@@ -111,11 +109,8 @@ async function getUserInfor (req, res, next){
             data: data
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ"
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -146,40 +141,194 @@ async function updateUserInfor (req, res, next){
             message: "Cập nhập thông tin người dùng thành công"
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ"
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
 
 async function addNewOrder (req, res, next){
     try{
-        const id = new ObjectId(req.headers['user-id'])
+        const rawId = req.headers['user-id']
+        let id = null
+        if (rawId){
+            try{ id = new ObjectId(rawId) }catch(e){ id = null }
+        }
         const data = req.body
         await ensureConnected()
         const accountsCollection = getAccountsCollection()
         if (!accountsCollection) throw new Error('Accounts collection unavailable')
-        const bdres = await accountsCollection.findOneAndUpdate(
-            { _id: id },
-            { $push: { orders: data } },
-            { new: true}
-        )
-        if (bdres){
-            req.data = {
-                status: "201",
-                message: "Thanh toán thành công"
+        // ensure product stock and decrement warehouse accordingly
+        const productsCollection = getProductsCollection()
+        const couponsCollection = getCouponsCollection && getCouponsCollection()
+        const guestOrdersCollection = getGuestOrdersCollection && getGuestOrdersCollection()
+
+        // orderList expected: [{ id, quantity, ... }, ...]
+        const items = Array.isArray(data.orderList) ? data.orderList : []
+
+        if (!productsCollection) throw new Error('Products collection unavailable')
+
+        // gather product ids and validate availability
+        // Use the ESM-imported ObjectId (imported at top) instead of CommonJS `require`
+        const ids = items.map(it => {
+            try{ return new ObjectId(String(it.id)) }catch(e){ return null }
+        }).filter(Boolean)
+
+        // fetch products
+        const products = await productsCollection.find({ _id: { $in: ids } }).toArray()
+
+        // map by string id
+        const prodMap = {}
+        products.forEach(p => { prodMap[p._id.toString()] = p })
+
+        // check availability
+        for (const it of items){
+            const pid = String(it.id || '')
+            const qty = Math.max(0, Number(it.quantity) || 0)
+            if (qty <= 0) {
+                req.data = { status: '400', message: 'Số lượng sản phẩm không hợp lệ' }
+                return next()
             }
-            next()
+            const prod = prodMap[pid]
+            if (!prod){
+                req.data = { status: '404', message: `Sản phẩm không tồn tại: ${pid}` }
+                return next()
+            }
+            const available = Number(prod.warehouse || 0)
+            if (available < qty){
+                req.data = { status: '409', message: `Sản phẩm ${prod.title || prod._id} không đủ trong kho` }
+                return next()
+            }
+        }
+
+        // All items available, perform atomic updates per product
+        const updates = []
+        try{
+            for (const it of items){
+                const pid = String(it.id)
+                const qty = Math.max(0, Number(it.quantity) || 0)
+                const upd = await productsCollection.findOneAndUpdate(
+                    { _id: new ObjectId(pid), warehouse: { $gte: qty } },
+                    { $inc: { warehouse: -qty, sold: qty } },
+                    { returnDocument: 'after' }
+                )
+                if (!upd.value){
+                    // rollback previous successful updates
+                        for (const u of updates){
+                        try{ await productsCollection.updateOne({ _id: new ObjectId(u.id) }, { $inc: { warehouse: u.qty, sold: -u.qty } }) }catch(e){}
+                    }
+                    req.data = { status: '409', message: 'Một số sản phẩm không đủ kho khi xử lý đơn hàng. Vui lòng thử lại.' }
+                    return next()
+                }
+                updates.push({ id: pid, qty })
+            }
+        } catch (prodErr) {
+            // attempt rollback if any updates applied
+            for (const u of updates) { try { await productsCollection.updateOne({ _id: new ObjectId(u.id) }, { $inc: { warehouse: u.qty, sold: -u.qty } }) } catch (e) { } }
+            logger.error('product update error during checkout', { err: prodErr && (prodErr.message || prodErr), items })
+            // fallback to guest order if possible
+            try {
+                if (guestOrdersCollection) {
+                    await guestOrdersCollection.insertOne({ order: data, createdAt: new Date(), guestIdentifier: (data.shipping && data.shipping.email) ? data.shipping.email : null, errorFallback: true })
+                    req.data = { status: '201', message: 'Thanh toán thành công (lưu trữ tạm do lỗi xử lý kho)' }
+                    // try to notify customer/admin even in fallback path
+                    try { const email = data.shipping && data.shipping.email; if (email) { sendOrderConfirmationEmail(email, data).catch(err => logger.error('sendOrderConfirmationEmail failed (fallback)', err)); notifyAdminOfOrder(data).catch(err => logger.error('notifyAdminOfOrder failed (fallback)', err)) } } catch (e) { logger.error('fallback email attempt failed', e) }
+                    return next()
+                }
+            } catch (e) { /* ignore */ }
+            return next(makeServerError(req, prodErr, 'product update error'))
+        }
+
+        // if a coupon code is included in the order payload, mark it used (defensive)
+        if (data.couponCode && couponsCollection){
+            try{
+                const c = await couponsCollection.findOne({ code: { $regex: `^${String(data.couponCode)}$`, $options: 'i' } })
+                if (c){
+                    const usedByMarker = id ? id.toString() : `guest:${(data.shipping && data.shipping.email) ? data.shipping.email : Date.now()}`
+                    // decrement remaining and add usedBy
+                    await couponsCollection.updateOne({ _id: c._id }, { $inc: { remaining: -1 }, $addToSet: { usedBy: usedByMarker } })
+                    // also add to user's usedCoupons if we have a logged-in user
+                    if (id) await accountsCollection.updateOne({ _id: id }, { $addToSet: { usedCoupons: c.code } })
+                }
+            }catch(e){ console.error('coupon marking failed', e) }
+        }
+
+        // persist order: if user logged in, push into their account; otherwise create a placeholder account or save to guestOrders
+        if (id){
+            // attach userId to the saved order for clarity
+            try{ data.userId = id.toString() }catch(e){}
+            const bdres = await accountsCollection.findOneAndUpdate(
+                { _id: id },
+                { $push: { orders: data } },
+                { returnDocument: 'after' }
+            )
+            if (bdres){
+                // also push an in-app notification to the user
+                try{
+                    const note = {
+                        type: 'order',
+                        message: `Đơn hàng ${data.orderCode || ''} đã được đặt thành công`,
+                        orderCode: data.orderCode || null,
+                        read: false,
+                        createdAt: new Date()
+                    }
+                    await accountsCollection.updateOne({ _id: id }, { $push: { notifications: note } })
+                }catch(e){ console.error('failed to push notification to user', e) }
+                // best-effort: send order confirmation email to customer and notify admin
+                try{
+                    const userDoc = bdres.value || await accountsCollection.findOne({_id: id})
+                    const email = (userDoc && userDoc.email) ? userDoc.email : (data.shipping && data.shipping.email)
+                    if (email){
+                        sendOrderConfirmationEmail(email, data).catch(err => logger.error('sendOrderConfirmationEmail failed', err))
+                        notifyAdminOfOrder(data).catch(err => logger.error('notifyAdminOfOrder failed', err))
+                    }
+                }catch(mailErr){ logger.error('order email attempt failed', mailErr) }
+
+                req.data = {
+                    status: "201",
+                    message: "Thanh toán thành công",
+                    ObjectId: id.toString()
+                }
+                return next()
+            }
+        } else {
+            // Try creating a placeholder user account so order is attached to an account id
+            try{
+                const placeholder = {
+                    username: `guest_${Date.now().toString().slice(-6)}`,
+                    password: '',
+                    name: data.shipping?.name || 'Khách vãng lai',
+                    email: data.shipping?.email || '',
+                    phoneNumber: data.shipping?.phoneNumber || '',
+                    address: data.shipping?.address || '',
+                    avatar: '/ava.svg',
+                    orders: [ data ],
+                    createdAt: new Date()
+                }
+                const insertRes = await accountsCollection.insertOne(placeholder)
+                if (insertRes && insertRes.insertedId){
+                    data.userId = insertRes.insertedId.toString()
+                    try{
+                        const email = data.shipping && data.shipping.email
+                        if (email){ sendOrderConfirmationEmail(email, data).catch(err=> logger.error('sendOrderConfirmationEmail failed for placeholder', err)); notifyAdminOfOrder(data).catch(err=> logger.error('notifyAdminOfOrder failed', err)) }
+                    }catch(e){ logger.error('placeholder email attempt failed', e) }
+                    req.data = { status: '201', message: 'Thanh toán thành công (khách hàng tạm được tạo)', ObjectId: insertRes.insertedId.toString() }
+                    return next()
+                }
+            }catch(e){ console.error('placeholder account create failed', e) }
+
+            // fallback to guestOrders collection
+            try{
+                if (!guestOrdersCollection) throw new Error('Guest orders collection unavailable')
+                await guestOrdersCollection.insertOne({ order: data, createdAt: new Date(), guestIdentifier: (data.shipping && data.shipping.email) ? data.shipping.email : null })
+                try{ const email = data.shipping && data.shipping.email; if (email) { sendOrderConfirmationEmail(email, data).catch(err=> logger.error('sendOrderConfirmationEmail failed for guest', err)); notifyAdminOfOrder(data).catch(err=> logger.error('notifyAdminOfOrder failed', err)) } }catch(e){ logger.error('guest order email attempt failed', e) }
+                req.data = { status: '201', message: 'Thanh toán thành công' }
+                return next()
+            }catch(e){ console.error('guest order persist failed', e) }
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ"
-        }
+    catch(err){
+        req.data = makeServerError(req, err, 'addNewOrder error')
     }
     next()
 }
@@ -197,11 +346,8 @@ async function getOrderList (req, res, next){
             data: data
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ"
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -246,8 +392,7 @@ async function socialLogin (req, res, next) {
         };
     }
     catch (err) {
-        console.error('socialLogin error', err);
-        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' };
+        req.data = makeServerError(req, err, 'socialLogin error')
     }
     next();
 }
@@ -288,8 +433,7 @@ async function oauthRedirect (req, res, next) {
         return res.status(404).send('Provider not supported');
     }
     catch (err) {
-        console.error('oauthRedirect error', err);
-        return res.status(500).send('Internal server error');
+        return makeServerErrorDirect(res, req, err, 'oauthRedirect error')
     }
 }
 
@@ -387,12 +531,50 @@ async function oauthCallback (req, res, next) {
         return res.send(html);
     }
     catch (err) {
-        console.error('oauthCallback error', err);
-        return res.status(500).send('Internal server error');
+        return makeServerErrorDirect(res, req, err, 'oauthCallback error')
     }
 }
 
 export { registerNewUser, checkLogin, getUserInfor, updateUserInfor, addNewOrder, getOrderList, socialLogin, oauthRedirect, oauthCallback, createSocialPlaceholder, linkSocialAccount }
+
+// Admin / utility endpoints
+async function getGuestOrders(req, res, next){
+    try{
+        await ensureConnected()
+        const guestOrdersCollection = getGuestOrdersCollection()
+        if (!guestOrdersCollection) return res.status(503).json({ status: '503', message: 'Guest orders not available' })
+        const list = await guestOrdersCollection.find({}).sort({ createdAt: -1 }).limit(500).toArray()
+        return res.json({ status: '200', data: list })
+    }catch(err){ return makeServerErrorDirect(res, req, err, 'getGuestOrders error') }
+}
+
+async function getNotifications(req, res, next){
+    try{
+        const id = req.params.id
+        if (!id) return res.status(400).json({ status: '400', message: 'Missing user id' })
+        await ensureConnected()
+        const accountsCollection = getAccountsCollection()
+        if (!accountsCollection) return res.status(503).json({ status: '503', message: 'Accounts service unavailable' })
+        const acc = await accountsCollection.findOne({ _id: new ObjectId(id) }, { projection: { notifications: 1 } })
+        return res.json({ status: '200', data: (acc && acc.notifications) ? acc.notifications : [] })
+    }catch(err){ return makeServerErrorDirect(res, req, err, 'getNotifications error') }
+}
+
+async function markNotificationRead(req, res, next){
+    try{
+        const { userId, createdAt } = req.body || {}
+        if (!userId || !createdAt) return res.status(400).json({ status: '400', message: 'Missing userId or createdAt' })
+        await ensureConnected()
+        const accountsCollection = getAccountsCollection()
+        const filter = { _id: new ObjectId(userId), 'notifications.createdAt': new Date(createdAt) }
+        const upd = { $set: { 'notifications.$.read': true } }
+        const r = await accountsCollection.updateOne(filter, upd)
+        if (r && r.matchedCount) return res.json({ status: '200', message: 'Marked read' })
+        return res.status(404).json({ status: '404', message: 'Notification not found' })
+    }catch(err){ return makeServerErrorDirect(res, req, err, 'markNotificationRead error') }
+}
+
+export { getGuestOrders, getNotifications, markNotificationRead }
 
 async function createSocialPlaceholder(req, res, next) {
     try {
@@ -424,8 +606,7 @@ async function createSocialPlaceholder(req, res, next) {
             token
         }
     } catch (err) {
-        console.error('createSocialPlaceholder error', err)
-        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+        req.data = makeServerError(req, err, 'createSocialPlaceholder error')
     }
     next()
 }
@@ -457,8 +638,7 @@ async function linkSocialAccount(req, res, next) {
         const token = JWT.sign({ id: account._id.toString(), username: account.username }, JWT_SECRET, { expiresIn: '7d' })
         req.data = { status: '201', message: 'Linked social account', ObjectId: account._id, token }
     } catch (err) {
-        console.error('linkSocialAccount error', err)
-        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+        req.data = makeServerError(req, err, 'linkSocialAccount error')
     }
     next()
 }
