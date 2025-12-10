@@ -199,21 +199,72 @@ async function addNewOrder (req, res, next){
             for (const it of items){
                 const pid = String(it.id)
                 const qty = Math.max(0, Number(it.quantity) || 0)
-                const upd = await productsCollection.findOneAndUpdate(
-                    { _id: new ObjectId(pid), warehouse: { $gte: qty } },
-                    { $inc: { warehouse: -qty, sold: qty } },
-                    { returnDocument: 'after' }
-                )
-                if (!upd.value){
-                    // rollback previous successful updates
-                    for (const u of updates){
-                        try{ await productsCollection.updateOne({ _id: new ObjectId(u.id) }, { $inc: { warehouse: u.qty, sold: -u.qty } }) }catch(e){}
+
+                // Retry a few times in case of transient race conditions
+                let attempts = 0
+                const maxAttempts = 3
+                let success = false
+                let lastUpd = null
+
+                while (attempts < maxAttempts && !success) {
+                    try {
+                        lastUpd = await productsCollection.findOneAndUpdate(
+                            { _id: new ObjectId(pid), warehouse: { $gte: qty } },
+                            { $inc: { warehouse: -qty, sold: qty } },
+                            { returnDocument: 'after' }
+                        )
+                    } catch (e) {
+                        // unexpected DB error
+                        logger.error('findOneAndUpdate failed', { err: e && (e.message || e), pid, qty, attempt: attempts })
+                        lastUpd = null
                     }
-                    logger.warn('product not available during atomic update', { pid, qty })
+
+                    if (lastUpd && lastUpd.value) {
+                        success = true
+                        updates.push({ id: pid, qty })
+                        break
+                    }
+
+                    // if update failed, check current warehouse to decide whether to retry
+                    try {
+                        const cur = await productsCollection.findOne({ _id: new ObjectId(pid) })
+                        const curQty = Number(cur?.warehouse || 0)
+                        if (cur == null) {
+                            // product vanished while processing: rollback and error
+                            for (const u of updates){ try{ await productsCollection.updateOne({ _id: new ObjectId(u.id) }, { $inc: { warehouse: u.qty, sold: -u.qty } }) }catch(e){} }
+                            req.data = { status: '404', message: `Sản phẩm không tồn tại: ${pid}` }
+                            return next()
+                        }
+                        // if available now, try again (transient), otherwise break and return out-of-stock
+                        if (curQty >= qty) {
+                            attempts++
+                            logger.info('retrying atomic product update', { pid, qty, attempt: attempts })
+                            // small backoff
+                            await new Promise(r => setTimeout(r, 50))
+                            continue
+                        } else {
+                            // not enough stock
+                            for (const u of updates){ try{ await productsCollection.updateOne({ _id: new ObjectId(u.id) }, { $inc: { warehouse: u.qty, sold: -u.qty } }) }catch(e){} }
+                            logger.warn('product out of stock during checkout processing', { pid, requested: qty, available: curQty })
+                            req.data = { status: '409', message: 'Một số sản phẩm không đủ kho khi xử lý đơn hàng. Vui lòng thử lại.' }
+                            return next()
+                        }
+                    } catch (e) {
+                        // if checking fails, treat as transient and retry a bit
+                        attempts++
+                        logger.warn('failed to inspect product after failed update, retrying', { pid, err: e && (e.message || e), attempt: attempts })
+                        await new Promise(r => setTimeout(r, 50))
+                        continue
+                    }
+                }
+
+                if (!success) {
+                    // rollback previous successful updates
+                    for (const u of updates){ try{ await productsCollection.updateOne({ _id: new ObjectId(u.id) }, { $inc: { warehouse: u.qty, sold: -u.qty } }) }catch(e){} }
+                    logger.error('failed to reserve product after retries', { pid, qty, attempts: maxAttempts })
                     req.data = { status: '409', message: 'Một số sản phẩm không đủ kho khi xử lý đơn hàng. Vui lòng thử lại.' }
                     return next()
                 }
-                updates.push({ id: pid, qty })
             }
         } catch (prodErr) {
             // attempt rollback if any updates applied
