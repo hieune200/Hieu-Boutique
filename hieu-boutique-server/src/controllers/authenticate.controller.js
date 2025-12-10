@@ -208,10 +208,10 @@ async function addNewOrder (req, res, next){
 
                 while (attempts < maxAttempts && !success) {
                     try {
-                        lastUpd = await productsCollection.findOneAndUpdate(
+                        // use updateOne for atomic check+decrement (compatible with driver versions)
+                        lastUpd = await productsCollection.updateOne(
                             { _id: new ObjectId(pid), warehouse: { $gte: qty } },
-                            { $inc: { warehouse: -qty, sold: qty } },
-                            { returnDocument: 'after' }
+                            { $inc: { warehouse: -qty, sold: qty } }
                         )
                     } catch (e) {
                         // unexpected DB error
@@ -219,7 +219,8 @@ async function addNewOrder (req, res, next){
                         lastUpd = null
                     }
 
-                    if (lastUpd && lastUpd.value) {
+                    // for updateOne, check modifiedCount to determine success
+                    if (lastUpd && (lastUpd.modifiedCount === 1 || lastUpd.matchedCount === 1 && lastUpd.modifiedCount === 1)) {
                         success = true
                         updates.push({ id: pid, qty })
                         break
