@@ -1,11 +1,11 @@
 import { ObjectId } from "mongodb"
 import bcrypt from "bcrypt"
 
-import { ensureConnected, getAccountsCollection, getProductsCollection, getCouponsCollection, getGuestOrdersCollection } from "../models/mongoClient.model.js"
+import { client, ensureConnected, getAccountsCollection, getProductsCollection, getCouponsCollection, getGuestOrdersCollection } from "../models/mongoClient.model.js"
 import { userSchema } from "../models/mongoSchema.model.js"
 import JWT from 'jsonwebtoken'
 import { makeServerError, makeServerErrorDirect } from "../utils/errorHelper.js"
-import { sendOrderConfirmationEmail, notifyAdminOfOrder } from "../utils/mailer.js"
+import { sendOrderConfirmationEmail, notifyAdminOfOrder, sendContactEmail } from "../utils/mailer.js"
 import logger from "../utils/logger.js"
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret'
@@ -120,6 +120,12 @@ async function updateUserInfor (req, res, next){
         const newInfor = new Object(req.body)
         const filter = {username: newInfor.username}
         delete newInfor.username
+        // If a password is provided in the update payload, hash it before persisting
+        if (newInfor.password) {
+            try{
+                newInfor.password = bcrypt.hashSync(String(newInfor.password), salt)
+            }catch(e){ /* if hashing fails, remove password to avoid storing raw value */ delete newInfor.password }
+        }
         const updateDoc = {
             $set: {
                 ...newInfor
@@ -380,11 +386,37 @@ async function addNewOrder (req, res, next){
 
 async function getOrderList (req, res, next){
     try{
-        const id = req.params.id
+        // Prefer authenticated user id from headers to prevent leaking other users' orders.
+        // If client supplies an id param it must match the authenticated id.
+        const paramId = req.params.id
+        const rawId = req.headers['user-id']
+        let useId = null
+        if (rawId){
+            try{ useId = new ObjectId(rawId) } catch(e){ useId = null }
+        }
+        // if no authenticated id provided, fall back to param (still validate)
+        if (!useId){
+            try{ useId = new ObjectId(paramId) } catch(e){ useId = null }
+        } else {
+            // if both provided and mismatch, reject the request
+            if (paramId && String(useId) !== String(paramId)){
+                req.data = { status: '403', message: 'Không có quyền xem đơn hàng của tài khoản khác' }
+                return next()
+            }
+        }
+
+        if (!useId){
+            req.data = { status: '400', message: 'Thiếu thông tin người dùng' }
+            return next()
+        }
+
         await ensureConnected()
         const accountsCollection = getAccountsCollection()
         if (!accountsCollection) throw new Error('Accounts collection unavailable')
-        const data = await accountsCollection.find({_id: new ObjectId(id)}).project({_id: 0, orders: 1}).toArray().then(res => res[0].orders)
+
+        const accountDoc = await accountsCollection.findOne({ _id: useId }, { projection: { orders: 1 } })
+        const data = Array.isArray(accountDoc?.orders) ? accountDoc.orders : []
+
         req.data = {
             status: "201",
             message: "Lấy danh sách đơn hàng thành công",
@@ -582,6 +614,89 @@ async function oauthCallback (req, res, next) {
 
 export { registerNewUser, checkLogin, getUserInfor, updateUserInfor, addNewOrder, getOrderList, socialLogin, oauthRedirect, oauthCallback, createSocialPlaceholder, linkSocialAccount }
 
+// Cancel an order for an authenticated user
+async function cancelOrder(req, res, next){
+    try{
+        const rawId = req.headers['user-id']
+        let id = null
+        if (rawId){ try{ id = new ObjectId(rawId) }catch(e){ id = null } }
+        if (!id) { req.data = { status: '400', message: 'Thiếu thông tin người dùng' }; return next() }
+        const { orderCode } = req.body || {}
+        if (!orderCode) { req.data = { status: '400', message: 'Missing orderCode' }; return next() }
+        await ensureConnected()
+        const accountsCollection = getAccountsCollection()
+        if (!accountsCollection) throw new Error('Accounts collection unavailable')
+        // find the specific order inside the user's orders array (projection to get the matching order)
+        const acctWithOrder = await accountsCollection.findOne({ _id: id, 'orders.orderCode': orderCode }, { projection: { 'orders.$': 1 } })
+        const matchedOrder = Array.isArray(acctWithOrder?.orders) && acctWithOrder.orders.length ? acctWithOrder.orders[0] : null
+        if (!matchedOrder) {
+            req.data = { status: '404', message: 'Order not found' }
+            return next()
+        }
+
+        // Best-effort: restore product quantities to inventory based on the order items
+        try{
+            const productsCollection = getProductsCollection()
+            if (productsCollection && Array.isArray(matchedOrder.orderList)){
+                for (const it of matchedOrder.orderList){
+                    try{
+                        const pid = it && it.id ? String(it.id) : null
+                        const qty = Math.max(0, Number(it.quantity) || 0)
+                        if (!pid || qty <= 0) continue
+                        try{
+                            // increment warehouse and decrement sold
+                            const up = await productsCollection.updateOne({ _id: new ObjectId(pid) }, { $inc: { warehouse: qty, sold: -qty } })
+                            if (up && up.matchedCount){
+                                // ensure sold does not become negative
+                                try{
+                                    const p = await productsCollection.findOne({ _id: new ObjectId(pid) }, { projection: { sold: 1 } })
+                                    if (p && typeof p.sold === 'number' && p.sold < 0){
+                                        await productsCollection.updateOne({ _id: new ObjectId(pid) }, { $set: { sold: 0 } })
+                                    }
+                                }catch(e){ /* ignore */ }
+                            }
+                        }catch(e){ logger.warn('product restock failed for cancelOrder', { err: e && (e.message || e), pid, qty }) }
+                    }catch(e){ /* ignore individual item errors */ }
+                }
+            }
+        }catch(e){ logger.warn('restoring products on cancel failed', e) }
+
+        // now mark the order as canceled
+        const filter = { _id: id, 'orders.orderCode': orderCode }
+        const update = { $set: { 'orders.$.orderStatus': 'cancled', 'orders.$.canceledAt': new Date() } }
+        const r = await accountsCollection.updateOne(filter, update)
+        if (!r || r.matchedCount === 0) {
+            req.data = { status: '404', message: 'Order not found' }
+            return next()
+        }
+
+        // push an in-app notification to the user about cancellation
+        try{
+            const note = {
+                type: 'order_canceled',
+                message: `Đơn hàng ${orderCode || ''} đã bị hủy`,
+                orderCode: orderCode || null,
+                read: false,
+                createdAt: new Date()
+            }
+            await accountsCollection.updateOne({ _id: id }, { $push: { notifications: note } })
+        }catch(e){ console.error('failed to push cancel notification to user', e) }
+
+        // Optionally notify admin about the cancellation
+        try{
+            // compose minimal order info for admin notification
+            const account = await accountsCollection.findOne({ _id: id }, { projection: { username:1, email:1 } })
+            const payload = { orderCode, userId: id.toString(), username: account?.username, email: account?.email, canceledAt: new Date() }
+            try{ notifyAdminOfOrder && notifyAdminOfOrder({ type: 'canceled', ...payload }).catch(()=>{}) }catch(e){}
+        }catch(e){ /* ignore notify errors */ }
+
+        req.data = { status: '201', message: 'Hủy đơn thành công', data: { orderCode } }
+    }catch(err){ req.data = makeServerError(req, err, 'cancelOrder error') }
+    next()
+}
+
+export { cancelOrder }
+
 // Admin / utility endpoints
 async function getGuestOrders(req, res, next){
     try{
@@ -620,6 +735,98 @@ async function markNotificationRead(req, res, next){
 }
 
 export { getGuestOrders, getNotifications, markNotificationRead }
+
+// Contact seller endpoint: store contact message and optionally email seller
+async function contactSeller(req, res, next){
+    try{
+        const rawId = req.headers['user-id']
+        let userId = null
+        if (rawId){ try{ userId = new ObjectId(rawId) }catch(e){ userId = null } }
+        const { orderCode, sellerEmail, sellerName, name, email, phone, message } = req.body || {}
+        if (!orderCode) { req.data = { status: '400', message: 'Missing orderCode' }; return next() }
+        if (!sellerEmail && !(sellerName)) { req.data = { status: '400', message: 'Missing seller contact' }; return next() }
+        await ensureConnected()
+        // write to a dedicated contacts collection
+        const dbClient = client
+        if (!dbClient) throw new Error('Database client unavailable')
+        const db = dbClient.db()
+        const contactsColl = db.collection('contacts')
+        const doc = {
+            orderCode: orderCode,
+            sellerEmail: sellerEmail || '',
+            sellerName: sellerName || '',
+            userId: userId ? userId.toString() : null,
+            name: name || null,
+            email: email || null,
+            phone: phone || null,
+            message: message || null,
+            read: false,
+            createdAt: new Date()
+        }
+        await contactsColl.insertOne(doc)
+
+        // attempt to notify seller by email (best-effort)
+        if (sellerEmail){
+            try{
+                const payload = { orderCode, name: name || '', email: email || '', phone: phone || '', message }
+                sendContactEmail(sellerEmail, payload).catch(err => logger.error('sendContactEmail failed', err))
+            }catch(e){ logger.warn('contact email attempt failed', e) }
+        }
+
+        req.data = { status: '201', message: 'Gửi liên hệ thành công' }
+    }catch(err){ req.data = makeServerError(req, err, 'contactSeller error') }
+    next()
+}
+
+export { contactSeller }
+
+// Confirm received endpoint: mark order as received by customer
+async function confirmReceived(req, res, next){
+    try{
+        const rawId = req.headers['user-id']
+        let id = null
+        if (rawId){ try{ id = new ObjectId(rawId) }catch(e){ id = null } }
+        if (!id) { req.data = { status: '400', message: 'Thiếu thông tin người dùng' }; return next() }
+        const { orderCode } = req.body || {}
+        if (!orderCode) { req.data = { status: '400', message: 'Missing orderCode' }; return next() }
+        await ensureConnected()
+        const accountsCollection = getAccountsCollection()
+        if (!accountsCollection) throw new Error('Accounts collection unavailable')
+
+        // update the order entry
+        const filter = { _id: id, 'orders.orderCode': orderCode }
+        const update = { $set: { 'orders.$.orderStatus': 'completed', 'orders.$.customerConfirmed': true, 'orders.$.receivedAt': new Date() } }
+        const r = await accountsCollection.updateOne(filter, update)
+        if (!r || r.matchedCount === 0) {
+            req.data = { status: '404', message: 'Order not found' }
+            return next()
+        }
+
+        // notify admin (best-effort)
+        try{
+            const account = await accountsCollection.findOne({ _id: id }, { projection: { username:1, email:1 } })
+            const payload = { orderCode, userId: id.toString(), username: account?.username, email: account?.email, receivedAt: new Date() }
+            try{ notifyAdminOfOrder && notifyAdminOfOrder({ type: 'received', ...payload }).catch(()=>{}) }catch(e){}
+        }catch(e){ /* ignore notify errors */ }
+
+        // push an in-app notification to the user about confirmation
+        try{
+            const note = {
+                type: 'order_received',
+                message: `Cảm ơn! Xác nhận đã nhận đơn hàng ${orderCode || ''}`,
+                orderCode: orderCode || null,
+                read: false,
+                createdAt: new Date()
+            }
+            await accountsCollection.updateOne({ _id: id }, { $push: { notifications: note } })
+        }catch(e){ console.error('failed to push received notification to user', e) }
+
+        req.data = { status: '201', message: 'Xác nhận đã nhận hàng thành công', data: { orderCode } }
+    }catch(err){ req.data = makeServerError(req, err, 'confirmReceived error') }
+    next()
+}
+
+export { confirmReceived }
 
 async function createSocialPlaceholder(req, res, next) {
     try {

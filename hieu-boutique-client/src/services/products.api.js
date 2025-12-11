@@ -1,8 +1,11 @@
 // In the browser `process` is undefined; Vite exposes env via `import.meta.env`.
-// Prefer IPv4 loopback by default to avoid environments where "localhost" resolves
-// to IPv6 ::1 and causes connection-refused errors. Users can still override
-// with `VITE_API_URL` in their environment.
-const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/products"
+// The client expects product APIs to live under the `/products` prefix on the
+// backend (express router mounted at `/products/`). Allow users to set
+// `VITE_API_URL` to the server root (e.g. http://localhost:3000) or directly
+// to the products base (e.g. http://localhost:3000/products). Normalize here
+// so callers can use paths like `/catalog/menu` safely.
+const SERVER_ROOT = (import.meta.env.VITE_API_URL || "http://127.0.0.1:3000").replace(/\/$/, '')
+const BASE_URL = SERVER_ROOT.endsWith('/products') ? SERVER_ROOT : `${SERVER_ROOT}/products`
 
 // Helper to fetch JSON with graceful error handling
 let backendAvailable = true

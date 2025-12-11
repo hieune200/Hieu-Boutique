@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import './componentStyle/ReviewModal.scss'
 
-const ReviewModal = ({ open, onClose, product, productId, onSubmitted })=>{
+const ReviewModal = ({ open, onClose, product, productId, onSubmitted, initialName, initialPhone })=>{
     const [rating, setRating] = useState(5)
-    const [name, setName] = useState('')
-    const [phone, setPhone] = useState('')
+    const [name, setName] = useState(initialName || '')
+    const [phone, setPhone] = useState(initialPhone || '')
     const [comment, setComment] = useState('')
     const [files, setFiles] = useState([])
     const [submitting, setSubmitting] = useState(false)
@@ -14,10 +14,20 @@ const ReviewModal = ({ open, onClose, product, productId, onSubmitted })=>{
     useEffect(()=>{
         if (!open){
             // reset form when closing
-            setRating(5); setName(''); setPhone(''); setComment(''); setFiles([]); setSubmitting(false)
+            setRating(5); setName(initialName || ''); setPhone(initialPhone || ''); setComment(''); setFiles([]); setSubmitting(false)
             setSubmitError(''); setSubmitSuccess('')
+        } else {
+            // when opening, initialize rating from product's saved average (use floor so 4.3 -> 4 stars)
+            try{
+                const prodScore = product && product.ratingAverage ? Number(product.ratingAverage) : null
+                const initial = prodScore !== null && !isNaN(prodScore) ? Math.max(1, Math.min(5, Math.floor(prodScore))) : 5
+                setRating(initial)
+                // prefill name/phone when available
+                setName(initialName || '')
+                setPhone(initialPhone || '')
+            }catch(e){ /* ignore */ }
         }
-    },[open])
+    },[open, product, initialName, initialPhone])
 
     if (!open) return null
 
@@ -62,6 +72,26 @@ const ReviewModal = ({ open, onClose, product, productId, onSubmitted })=>{
                 // optionally call parent callback to refresh reviews
                 onSubmitted && onSubmitted()
                 // close modal after short delay so user sees success
+                // dispatch a local notification event so header/panel update immediately
+                try{
+                    const note = {
+                        id: `note-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+                        title: `Cảm ơn vì đánh giá`,
+                        time: new Date().toISOString(),
+                        body: `Bạn vừa gửi đánh giá cho ${product?.title || ''}`,
+                        type: 'review',
+                        productId: productId,
+                        read: false
+                    }
+                    try{
+                        const uid = sessionStorage.getItem('userID') || localStorage.getItem('userID') || 'anonymous'
+                        const key = `hb_notifications_pending_${uid}`
+                        const cur = JSON.parse(localStorage.getItem(key) || '[]')
+                        cur.unshift(note)
+                        localStorage.setItem(key, JSON.stringify(cur.slice(0,50)))
+                    }catch(e){}
+                    window.dispatchEvent(new CustomEvent('new-notification', { detail: note }))
+                }catch(e){}
                 setTimeout(()=>{ onClose() }, 900)
             } else {
                 const msg = data.message || 'Lỗi khi gửi đánh giá. Vui lòng thử lại.'

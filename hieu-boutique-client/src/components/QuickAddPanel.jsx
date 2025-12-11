@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReactDOM from 'react-dom'
+import { useToast } from './ToastProvider'
 import PropTypes from 'prop-types'
 import cartIcon from '../assets/imgs/common/cart-icon.png'
 import './componentStyle/ProductCard.scss'
@@ -73,7 +74,7 @@ function QuickAddPanel({ product, image, onClose }) {
         <div className="quickadd-grid">
           <div className="quickadd-image">
             <button className="qa-arrow qa-prev" onClick={() => setSelectedIndex((selectedIndex - 1 + imgs.length) % imgs.length)} aria-label="Prev image">‹</button>
-            <img src={selectedImg || imgs[0] || ''} alt={product?.title} />
+            <img src={selectedImg || imgs[0] || '/ava.svg'} alt={product?.title} onError={(e)=>{ try{ e.currentTarget.src = '/ava.svg' }catch(err){ console.warn(err) } }} />
             <button className="qa-arrow qa-next" onClick={() => setSelectedIndex((selectedIndex + 1) % imgs.length)} aria-label="Next image">›</button>
           </div>
 
@@ -88,7 +89,7 @@ function QuickAddPanel({ product, image, onClose }) {
               <div className="qa-swatches" style={{ marginTop: 12 }}>
                 {swatches.map((s, i) => (
                   <button key={i} className={"swatch" + (selectedIndex === i ? ' active' : '')} onClick={() => setSelectedIndex(i)} style={{ marginRight: 8 }}>
-                    <img src={s} alt={`swatch-${i}`} />
+                    <img src={s || '/ava.svg'} alt={`swatch-${i}`} onError={(e)=>{ try{ e.currentTarget.src = '/ava.svg' }catch(err){ console.warn(err) } }} />
                   </button>
                 ))}
               </div>
@@ -112,10 +113,10 @@ function QuickAddPanel({ product, image, onClose }) {
                 <button onClick={() => changeQty(1)} style={{ border: 0, background: 'transparent', fontSize: 18 }}>+</button>
               </div>
 
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button className="qa-add" onClick={() => addToCart(true)}><img src={cartIcon} alt="cart" />&nbsp;Thêm giỏ hàng</button>
-                <button className="qa-buy" onClick={() => addToCart(true)}>MUA NGAY</button>
-              </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="qa-add" onClick={() => addToCart(true)}><img src={cartIcon} alt="cart" />&nbsp;Thêm giỏ hàng</button>
+              <button className="qa-buy" onClick={() => { addToCart(true); nav('/checkout') }}>MUA NGAY</button>
+            </div>
             </div>
           </div>
         </div>

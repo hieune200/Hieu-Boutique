@@ -1,6 +1,24 @@
 import { ObjectId } from "mongodb"
 import crypto from 'crypto'
-import { ensureConnected, getProductsCollection, getHotProductsCollection, getCollectionsCollection } from "../models/mongoClient.model.js"
+import { ensureConnected, getProductsCollection, getHotProductsCollection, getCollectionsCollection, getAccountsCollection } from "../models/mongoClient.model.js"
+import { makeServerError } from "../utils/errorHelper.js"
+
+// Helper: compute aggregates (counts, average, ratingCount, hasImagesCount) from reviews array
+function computeReviewAggregates(reviews){
+    const arr = Array.isArray(reviews) ? reviews : []
+    const counts = { _1:0,_2:0,_3:0,_4:0,_5:0 }
+    let total = 0
+    let hasImagesCount = 0
+    arr.forEach(r => {
+        const rt = Number(r.rating) || 0
+        if (rt >=1 && rt <=5) counts[`_${rt}`] = (counts[`_${rt}`] || 0) + 1
+        if (Array.isArray(r.images) && r.images.length) hasImagesCount++
+        total += rt
+    })
+    const ratingCount = arr.length
+    const ratingAverage = ratingCount ? Math.round((total / ratingCount) * 10) / 10 : 5
+    return { ratingCount, ratingAverage, hasImagesCount, _1Count: counts._1, _2Count: counts._2, _3Count: counts._3, _4Count: counts._4, _5Count: counts._5 }
+}
 
 // generate a short product code (masanpham) for DB records (crypto-based)
 function generateMasanpham(prefix = 'HB'){
@@ -94,11 +112,8 @@ async function productListID (req, res, next){
             data: data
         }
     } 
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ",
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -120,11 +135,8 @@ async function productNewListID (req, res, next){
             data: data
         }
     } 
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ",
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -143,11 +155,8 @@ async function productDetail (req, res, next){
             data: data
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ",
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -174,11 +183,8 @@ async function suggestListID (req, res, next){
             data: data
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ",
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -196,11 +202,8 @@ async function hotProductListID (req, res, next){
             data: idList
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ",
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -242,11 +245,8 @@ async function searchListID(req,res,next){
             data: data
         }
     }
-    catch{
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ",
-        }
+    catch(err){
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -268,10 +268,7 @@ async function collectionProductsID(req, res, next){
     }
     catch(err){
         console.error('collectionProductsID error', err)
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ",
-        }
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -292,10 +289,7 @@ async function collectionInfo(req, res, next){
     }
     catch(err){
         console.error('collectionInfo error', err)
-        req.data = {
-            status: "500",
-            message: "Lỗi máy chủ nội bộ",
-        }
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -330,7 +324,7 @@ async function createProduct(req, res, next){
         // if still conflict after retries, abort
         const still = await productsCollection.findOne({ masanpham: payload.masanpham })
         if (still){
-            req.data = { status: '500', message: 'Không thể tạo mã sản phẩm duy nhất, thử lại sau' }
+            req.data = makeServerError(req, new Error('Cannot generate unique masanpham after retries'), 'createProduct masanpham uniqueness')
             return next()
         }
         // optional: prevent accidental duplicate titles
@@ -353,7 +347,7 @@ async function createProduct(req, res, next){
         req.data = { status: '201', message: 'Tạo sản phẩm thành công', data: doc }
     }catch(err){
         console.error('createProduct error', err)
-        req.data = { status: '500', message: 'Lỗi khi tạo sản phẩm' }
+        req.data = makeServerError(req, err, 'createProduct error')
     }
     next()
 }
@@ -386,7 +380,7 @@ async function catalogInfo(req, res, next){
     }
     catch(err){
         console.error('catalogInfo error', err)
-        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -409,7 +403,7 @@ async function catalogMenu(req, res, next){
     }
     catch(err){
         console.error('catalogMenu error', err)
-        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -436,7 +430,7 @@ async function updateProductHighlight(req, res, next){
     }
     catch(err){
         console.error('updateProductHighlight error', err)
-        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -481,7 +475,7 @@ async function updateProductDetails(req, res, next){
     }
     catch(err){
         console.error('updateProductDetails error', err)
-        req.data = { status: '500', message: 'Lỗi máy chủ nội bộ' }
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -516,7 +510,7 @@ async function purchaseProduct(req, res, next){
         req.data = { status: '200', message: 'Mua hàng thành công, kho đã được cập nhật', data: doc }
     }catch(err){
         console.error('purchaseProduct error', err)
-        req.data = { status: '500', message: 'Lỗi máy chủ khi xử lý mua hàng' }
+        req.data = makeServerError(req, err)
     }
     next()
 }
@@ -556,11 +550,49 @@ async function addProductReview(req, res, next){
 
         await productsCollection.updateOne({_id: new ObjectId(id)}, { $push: { reviews: review } })
 
+        // recompute and persist simple aggregates on product doc so frontend can read them directly
+        const updated = await productsCollection.findOne({_id: new ObjectId(id)})
+        const agg = computeReviewAggregates(Array.isArray(updated?.reviews) ? updated.reviews : [])
+        await productsCollection.updateOne({_id: new ObjectId(id)}, { $set: {
+            ratingCount: agg.ratingCount,
+            ratingAverage: agg.ratingAverage,
+            hasImagesCount: agg.hasImagesCount,
+            _1Count: agg._1Count,
+            _2Count: agg._2Count,
+            _3Count: agg._3Count,
+            _4Count: agg._4Count,
+            _5Count: agg._5Count,
+            updatedAt: new Date()
+        }})
+
         req.data = { status: '201', message: 'Gửi đánh giá thành công', data: { review } }
+
+        // Push an in-app notification to the submitting user's account (if known)
+        try{
+            if (userId){
+                const accountsCollection = getAccountsCollection()
+                if (accountsCollection){
+                    let acctFilter = null
+                    try{ acctFilter = { _id: new ObjectId(userId) } }catch(e){ acctFilter = { _id: userId } }
+                    const note = {
+                        _id: new ObjectId(),
+                        type: 'review',
+                        message: `Cảm ơn bạn đã gửi đánh giá cho sản phẩm`,
+                        productId: String(id || ''),
+                        reviewId: String(review._id),
+                        read: false,
+                        createdAt: new Date()
+                    }
+                    await accountsCollection.updateOne(acctFilter, { $push: { notifications: note } })
+                }
+            }
+        }catch(e){
+            console.error('failed to push review notification', e)
+        }
     }
     catch(err){
         console.error('addProductReview error', err)
-        req.data = { status: '500', message: 'Lỗi khi lưu đánh giá' }
+        req.data = makeServerError(req, err, 'addProductReview error')
     }
     next()
 }
@@ -594,23 +626,43 @@ async function removeProductReview(req, res, next){
 
         // determine requesting user id (from middleware or body/header fallback)
         const requester = req.userId || (req.body && req.body.userId) || req.headers['x-user-id'] || null
+        const isAdmin = (req.user && ((req.user.role && String(req.user.role).toLowerCase() === 'admin') || req.user.isAdmin))
+
         if (review.userId){
-            if (!requester || String(requester) !== String(review.userId)){
+            if (!isAdmin && (!requester || String(requester) !== String(review.userId))){
                 req.data = { status: '403', message: 'Bạn không có quyền xóa đánh giá này' }
                 return next()
             }
         } else {
-            // review has no owner — disallow deletion via API to prevent abuse
-            req.data = { status: '403', message: 'Đánh giá không có quyền xóa' }
-            return next()
+            // if review has no owner only admin can remove it
+            if (!isAdmin){
+                req.data = { status: '403', message: 'Đánh giá không có quyền xóa' }
+                return next()
+            }
         }
 
         await productsCollection.updateOne({_id: new ObjectId(id)}, { $pull: { reviews: { _id: review._id } } })
+
+        // recompute aggregates after deletion and persist
+        const after = await productsCollection.findOne({_id: new ObjectId(id)})
+        const aggAfter = computeReviewAggregates(Array.isArray(after?.reviews) ? after.reviews : [])
+        await productsCollection.updateOne({_id: new ObjectId(id)}, { $set: {
+            ratingCount: aggAfter.ratingCount,
+            ratingAverage: aggAfter.ratingAverage,
+            hasImagesCount: aggAfter.hasImagesCount,
+            _1Count: aggAfter._1Count,
+            _2Count: aggAfter._2Count,
+            _3Count: aggAfter._3Count,
+            _4Count: aggAfter._4Count,
+            _5Count: aggAfter._5Count,
+            updatedAt: new Date()
+        }})
+
         req.data = { status: '200', message: 'Xóa đánh giá thành công' }
     }
     catch(err){
         console.error('removeProductReview error', err)
-        req.data = { status: '500', message: 'Lỗi khi xóa đánh giá' }
+        req.data = makeServerError(req, err, 'removeProductReview error')
     }
     next()
 }
@@ -650,7 +702,7 @@ async function adjustProductSold(req, res, next){
         req.data = { status: '200', message: 'Điều chỉnh thành công', data: doc }
     }catch(err){
         console.error('adjustProductSold error', err)
-        req.data = { status: '500', message: 'Lỗi khi điều chỉnh sản phẩm' }
+        req.data = makeServerError(req, err, 'adjustProductSold error')
     }
     next()
 }

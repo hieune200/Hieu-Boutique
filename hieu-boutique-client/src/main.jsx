@@ -8,6 +8,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 
 import { GlobalProvider } from './context/globalContext'
+import ServerErrorModal from './components/ServerErrorModal'
 import { router } from './utils/Router'
 import { ToastProvider } from './components/ToastProvider'
 import './assets/g-style/main.scss'
@@ -16,6 +17,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <ToastProvider>
       <GlobalProvider>
+        <ServerErrorModal />
         <div className="top-stacked">
           <TopPromoBar />
           <Header />

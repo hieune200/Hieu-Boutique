@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import logger from './src/utils/logger.js'
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors"
@@ -19,8 +20,16 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json({ limit: "2mb" }))
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" })); 
-app.use(cors())
-app.options('*', cors())
+// Configure CORS to reflect the request origin and allow credentials
+// When the client sends credentials (cookies), the server must not return '*'
+const corsOptions = {
+    origin: true, // reflect request origin
+    credentials: true,
+    // allow the custom `user-id` header used by the client along with common headers
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'user-id']
+}
+app.use(cors(corsOptions))
+app.options('*', cors(corsOptions))
 
 // serve uploaded files
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')))
@@ -42,25 +51,66 @@ const PORT = Number(process.env.PORT) || 3000
 ;(async ()=>{
     try{
         await ensureConnected()
-        console.log('MongoDB connected — server starting')
+        logger.info('MongoDB connected — server starting')
     }
     catch(err){
-        console.warn('Warning: MongoDB initialization failed. Server will start without DB. Error:', err && err.message ? err.message : err)
+        logger.warn('Warning: MongoDB initialization failed. Server will start without DB.', { message: err && err.message ? err.message : err })
     }
 
-    const server = app.listen(PORT, () => {
-        console.log(`Server listening on http://localhost:${PORT}`)
-    })
-
-    server.on('error', (err) => {
-        if (err && err.code === 'EADDRINUSE') {
-            console.error(`Port ${PORT} is already in use. To keep the backend on port ${PORT}, stop the process currently using that port or change the PORT environment variable.`)
-            process.exit(1)
+    // attempt to listen on PORT, but if it's in use try next available ports up to a limit
+    async function listenWithRetry(startPort, maxAttempts = 10){
+        let port = startPort
+        for (let i = 0; i < maxAttempts; i++){
+            try{
+                const server = app.listen(port)
+                await new Promise((resolve, reject) => {
+                    server.once('listening', () => resolve())
+                    server.once('error', (err) => reject(err))
+                })
+                logger.info(`Server listening on http://localhost:${port}`)
+                // attach an error listener to log unexpected runtime errors
+                server.on('error', (err) => {
+                    logger.error('Server runtime error', { message: err && err.message ? err.message : err, code: err && err.code ? err.code : undefined })
+                })
+                return server
+            }catch(err){
+                if (err && err.code === 'EADDRINUSE'){
+                    logger.warn(`Port ${port} is already in use, trying next port...`) 
+                    port = port + 1
+                    // continue to next attempt
+                    await new Promise(r => setTimeout(r, 200))
+                    continue
+                }
+                logger.error('Failed to start server', { message: err && err.message ? err.message : err })
+                throw err
+            }
         }
-        console.error('Server failed to start:', err && err.message ? err.message : err)
+        throw new Error(`No available ports after ${maxAttempts} attempts starting from ${startPort}`)
+    }
+
+    try{
+        await listenWithRetry(PORT, 20)
+    }catch(err){
+        logger.error('Unable to bind to any port; exiting', { message: err && err.message ? err.message : err })
         process.exit(1)
-    })
+    }
 
     // Keep attempting to connect in background if initial connection failed
     // connectWithRetry is already running in the model; nothing else to do here.
 })()
+
+// Route console.* to logger so existing console.error calls still get captured to files
+try{
+    console.error = (...args) => { logger.error(args.map(a=> (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')) }
+    console.warn = (...args) => { logger.warn(args.map(a=> (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')) }
+    console.log = (...args) => { logger.info(args.map(a=> (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')) }
+}catch(e){ /* ignore if mapping fails */ }
+
+// Global handlers to make sure unexpected errors are logged with stack traces
+process.on('uncaughtException', (err) => {
+    try{ logger.error('uncaughtException', { message: err && err.message ? err.message : String(err), stack: err && err.stack ? err.stack : null }) }catch(e){ try{ console.error('uncaughtException', err) }catch(_){} }
+})
+
+process.on('unhandledRejection', (reason) => {
+    try{ logger.error('unhandledRejection', { reason: reason && (reason.message || reason.stack) ? (reason.message || reason.stack) : String(reason) }) }catch(e){ try{ console.error('unhandledRejection', reason) }catch(_){} }
+})

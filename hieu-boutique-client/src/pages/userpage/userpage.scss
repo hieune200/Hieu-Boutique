@@ -1,9 +1,10 @@
 // User page styles: improved form layout, required indicators, focus states
-$brand: #6b2aa8; // purple
-$accent: #1155ff; // blue
-$danger: #e53935;
-$muted: #8a8a8a;
-$profile-accent: #c21; // brand red for profile highlights
+// Unified color palette to match site theme
+$brand: #6b2aa8; // primary purple
+$accent: #8a5de0; // lighter purple accent
+$danger: #e53935; // red for errors
+$muted: #6f6f6f; // muted text
+$profile-accent: $brand; // use primary brand color for profile links
 
 .userpage{
     display: grid;
@@ -43,6 +44,26 @@ $profile-accent: #c21; // brand red for profile highlights
                 }
             }
         }
+
+                // Override: make most userpage text red, but keep username/profile/change-password highlighted
+                // This block intentionally uses !important to ensure it overrides prior color rules.
+                .userpage {
+                    .sidebar, .board {
+                        color: $danger !important;
+                        a, p, li, label, span { color: $danger !important; }
+                    }
+
+                    // Exceptions: keep username and profile-related links in brand color
+                    .sidebar_avt_username p:first-child,
+                    .sidebar_avt a,
+                    .sidebar_nav > ul > li > a,
+                    .sidebar_nav_list li a[href="/user/profile"],
+                    .sidebar_nav_list li a[href="/user/change-password"],
+                    .profile_header p:first-child,
+                    .change-password h2 {
+                        color: $profile-accent !important;
+                    }
+                }
         ul{
             li{
                 line-height: 40px;
@@ -292,14 +313,14 @@ $profile-accent: #c21; // brand red for profile highlights
                 .save-toast.success{ background: #e9f7ef; color: #12643a; }
                 .save-toast.error{ background: #fff1f0; color: #7a1620; }
                 .infor_list_btn{
-                    background: $profile-accent; /* red background */
+                    background: $brand; /* primary brand background */
                     width: 120px;
                     height: 44px;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     padding: 6px 14px; /* nudge text a bit upward */
-                    border: 2px solid darken($profile-accent, 6%);
+                    border: 2px solid darken($brand, 6%);
                     border-radius: 8px;
                     outline: none;
                     font-size: 15px;
@@ -311,8 +332,8 @@ $profile-accent: #c21; // brand red for profile highlights
                 }
                 .infor_list_btn:hover{
                     transform: translateY(-2px);
-                    box-shadow: 0 10px 24px rgba($profile-accent, 0.18);
-                    background: darken($profile-accent, 4%);
+                    box-shadow: 0 10px 24px rgba($brand, 0.18);
+                    background: darken($brand, 4%);
                 }
 
                 // Make the save button centered inside the input grid
@@ -338,7 +359,7 @@ $profile-accent: #c21; // brand red for profile highlights
                 }
             }
         }
-        .order{
+                .order{
             &_title{
                 width: 100%;
                 height: 40px;
@@ -346,10 +367,11 @@ $profile-accent: #c21; // brand red for profile highlights
                 line-height: 40px;
                 font-size: 18px;
                 font-weight: 700;
+                        color: $brand;
             }
             &_list{
-                &_item{
-                    background-color: #e9e9e9;
+                        &_item{
+                            background-color: #f5f3fb; // subtle lavender background
                     padding: 20px;
                     margin-bottom: 20px;
                     border-radius: 4px;
@@ -361,13 +383,13 @@ $profile-accent: #c21; // brand red for profile highlights
                         font-size: 14px;
                         &>p{
                             font-weight: 700;
-                            opacity: .7;
+                                    opacity: .85;
                         }
                         .state{
-                            color: green;
+                            color: #0aa05a;
                         }
                         .cancled{
-                            color: red;
+                            color: $danger;
                         }
                         .oder-status{
                             margin-left: 5px;
@@ -397,13 +419,14 @@ $profile-accent: #c21; // brand red for profile highlights
                                 .free{
                                     width: 170px;
                                     text-align: center;
-                                    color: rgb(0, 128, 90);
-                                    border: 1px solid rgb(0, 128, 90);
+                                    color: #0aa05a;
+                                    border: 1px solid #0aa05a;
                                 }
                             }
                             .price{
-                                text-align: right;
-                                font-size: 14px;
+                                        text-align: right;
+                                        font-size: 14px;
+                                        color: $brand;
                             }
                         }
                     }
@@ -428,6 +451,74 @@ $profile-accent: #c21; // brand red for profile highlights
                 .bg-black{
                     background-color: #000000;
                     color: white;
+                }
+                .confirm-btn{
+                    background: $brand;
+                    color: #fff;
+                    border: 1px solid darken($brand, 6%);
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    font-weight: 700;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+                }
+                .review-btn{
+                    background: #ff8a00;
+                    color: #fff;
+                    border: 1px solid darken(#ff8a00, 6%);
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    font-weight: 700;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+                }
+                .review-btn:hover{
+                    transform: translateY(-2px);
+                    background: darken(#ff8a00, 4%);
+                    box-shadow: 0 8px 24px rgba(255,138,0,0.12);
+                }
+                .confirm-btn:hover{
+                    transform: translateY(-2px);
+                    background: darken($brand, 4%);
+                    box-shadow: 0 8px 24px rgba($brand, 0.12);
+                }
+                .btn[disabled], .btn.disabled{ opacity: .6; cursor: not-allowed }
+                .order-status-label{ font-weight: 800; color: $brand }
+                .contact-modal{
+                    position: fixed;
+                    inset: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1200;
+                    .contact-backdrop{ position: absolute; inset:0; background: rgba(0,0,0,0.4); }
+                    .contact-content{
+                        position: relative;
+                        background: #fff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        width: 90vw;
+                        max-width: 980px;
+                        box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+                    }
+                    .contact-form{
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 12px;
+                        .field-row{
+                            display: flex;
+                            flex-direction: column;
+                            label{ font-weight: 700; margin-bottom: 6px; }
+                            .field-value{ color: $muted; font-size: 14px; }
+                            input, textarea{ width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #dcdcdc; }
+                        }
+                        .contact-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:10px; }
+                    }
+                    .contact-close{ position: absolute; right: 8px; top: 8px; border:0; background:transparent; font-size:18px; cursor:pointer }
                 }
             }
         }

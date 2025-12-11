@@ -25,7 +25,8 @@
     .product-meta img{ width:78px; height:78px; object-fit:cover; border-radius:8px }
     .product-title{ font-weight:700 }
     .product-id{ color:#777; font-size:13px }
-    .rating-preset .star{ color:#c60b0b; margin-right:6px; font-size:16px }
+    .rating-preset .star{ color:#000; margin-right:6px; font-size:16px }
+    .rating-preset .star.active{ color:#c60b0b }
 
     .review-form{ display:flex; flex-direction:column; gap:12px }
     .error-message{ color:#7a0b0b; background:#ffecec; border:1px solid #f2c6c6; padding:8px 12px; border-radius:8px; font-weight:600 }
@@ -34,7 +35,7 @@
     .star-btn{
         background:transparent;
         border:1px solid transparent;
-        color:#c60b0b; /* change unselected stars to site red */
+        color:#000; /* unselected stars are black */
         font-size:18px;
         width:40px;
         height:40px;

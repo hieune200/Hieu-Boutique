@@ -316,6 +316,19 @@ const Checkoutpage = ()=>{
             // remove cart and show a friendly confirmation modal
             localStorage.removeItem('cart')
             setSuccessOrder({ orderCode: code, finalTotal: data.finalTotal })
+            try{
+                // build notification payload to inform header (will increment badge)
+                const notif = {
+                    id: `order-${code}-${Date.now()}`,
+                    title: `Đơn hàng ${code} đã được đặt`,
+                    time: 'Vừa xong',
+                    body: `Bạn đã đặt ${orderList && orderList.length ? orderList.map(i=>i.title).join(', ') : 'một đơn hàng'}. Tổng: ${formatCurrency(data.finalTotal)}`,
+                    read: false,
+                    type: 'order',
+                    orderCode: code
+                }
+                window.dispatchEvent(new CustomEvent('new-notification', { detail: notif }))
+            }catch(e){ console.warn('dispatch new-notification failed', e) }
         }
         showToast((res && res.message) ? res.message : 'Thông báo', (res && res.status == 201) ? 'success' : 'error')
         setLoading(false)
@@ -332,6 +345,18 @@ const Checkoutpage = ()=>{
             }
             if (res && res.status == 201) {
                 localStorage.removeItem('cart')
+                try{
+                    const notif = {
+                        id: `order-${pendingOrderData.orderCode || ''}-${Date.now()}`,
+                        title: `Đơn hàng ${pendingOrderData.orderCode || ''} đã được đặt`,
+                        time: 'Vừa xong',
+                        body: `Bạn đã đặt ${pendingOrderData.orderList && pendingOrderData.orderList.length ? pendingOrderData.orderList.map(i=>i.title).join(', ') : 'một đơn hàng'}. Tổng: ${formatCurrency(pendingOrderData.finalTotal)}`,
+                        read: false,
+                        type: 'order',
+                        orderCode: pendingOrderData.orderCode || ''
+                    }
+                    window.dispatchEvent(new CustomEvent('new-notification', { detail: notif }))
+                }catch(e){ console.warn('dispatch new-notification failed', e) }
             }
             showToast((res && res.message) ? res.message : 'Thông báo', (res && res.status == 201) ? 'success' : 'error')
             // mark payment modal closed
@@ -348,6 +373,24 @@ const Checkoutpage = ()=>{
     }
     const handleSetInforCheckout = (type,value)=>{
         setInforCheckout(prev => ({ ...(prev || {}), [type]: value }))
+    }
+
+    const handlePlaceOrder = (e) => {
+        // ensure cart has items
+        const cartEmpty = !(cartData && Array.isArray(cartData) && cartData.length > 0)
+        if (cartEmpty) {
+            try{ showToast('Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi đặt hàng.', 'error') }catch(e){}
+            return
+        }
+        // require login
+        if (!ctUserID) {
+            try{ showToast('Vui lòng đăng nhập để đặt hàng', 'error') }catch(e){}
+            const next = encodeURIComponent(location.pathname + location.search + location.hash)
+            nav(`/login?next=${next}`)
+            return
+        }
+        // otherwise proceed with normal submit
+        try{ handleSubmit(e || { preventDefault: () => {} }) }catch(err){ console.warn('handlePlaceOrder submit failed', err) }
     }
     const formatCurrency = (v)=>{
         try{ return Number(v).toLocaleString('it-IT', {style : 'currency', currency : 'VND'}) }catch(e){ return '0đ' }
@@ -501,7 +544,7 @@ const Checkoutpage = ()=>{
                         <div style={{display:'flex', flexDirection:'column', gap:12}}>
                             { (Array.isArray(cartData) && cartData.length) ? cartData.map((item, idx)=> (
                                 <div key={idx} style={{display:'flex', gap:12, alignItems:'center'}}>
-                                    <img src={item?.img} alt={item?.title} style={{width:72, height:72, objectFit:'cover', borderRadius:6}} />
+                                    <img src={item?.img || '/ava.svg'} alt={item?.title} style={{width:72, height:72, objectFit:'cover', borderRadius:6}} onError={(e)=>{ try{ e.currentTarget.src = '/ava.svg' }catch(err){ console.warn(err) } }} />
                                     <div style={{flex:1}}>
                                         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                                             <strong style={{fontSize:16}}>{item?.title}</strong>
@@ -534,7 +577,25 @@ const Checkoutpage = ()=>{
 
                         <div style={{marginTop:12, display:'flex', gap:8}}>
                             <button type="button" className='btn' onClick={()=>nav('/')} style={{flex:1, background:'#eee'}}>Trang chủ</button>
-                            <button type="button" className='btn' onClick={(e)=>handleSubmit(e)} style={{flex:1, background:'#c62828', color:'#fff'}}>Đặt hàng</button>
+                            {
+                                (() => {
+                                    const cartEmpty = !(cartData && Array.isArray(cartData) && cartData.length > 0)
+                                    return (
+                                        <button
+                                            type="button"
+                                            className='btn'
+                                            onClick={(e)=>handlePlaceOrder(e)}
+                                            disabled={cartEmpty}
+                                            style={{
+                                                flex:1,
+                                                background: cartEmpty ? '#eee' : '#c62828',
+                                                color: cartEmpty ? '#666' : '#fff',
+                                                cursor: cartEmpty ? 'not-allowed' : 'pointer'
+                                            }}
+                                        >Đặt hàng</button>
+                                    )
+                                })()
+                            }
                         </div>
                     </div>
                 </aside>
@@ -557,14 +618,14 @@ const Checkoutpage = ()=>{
                             <h2>Quét mã QR để thanh toán</h2>
                             <p style={{color:'rgba(0,0,0,0.6)'}}>Thời gian còn lại: 15p00s</p>
                             <div style={{marginTop:12}}>
-                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}><div>Ngân hàng:</div><div style={{fontWeight:800}}>VietinBank – Ngân hàng TMCP Công Thương Việt Nam</div></div>
+                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}><div>Ngân hàng:</div><div style={{fontWeight:800}}>Vietcombank – Ngân hàng TMCP Ngoại Thương Việt Nam</div></div>
                                 <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}><div>Số tài khoản:</div><div style={{fontWeight:800}}>116647746666</div></div>
-                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}><div>Tên tài khoản:</div><div style={{fontWeight:800}}>CÔNG TY CỔ PHẦN 5S FASHION</div></div>
+                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}><div>Tên tài khoản:</div><div style={{fontWeight:800}}>CÔNG TY CỔ PHẦN HIEU BOUTIQUE</div></div>
                                 <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}><div>Nội dung:</div><div style={{fontWeight:800}}>{pendingOrderData?.orderCode || orderCode ? `Thanh toán cho đơn hàng: ${pendingOrderData?.orderCode || orderCode}` : 'Thanh toán đơn hàng'}</div></div>
                                 <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}><div>Số tiền:</div><div style={{fontWeight:900, color:'#c62828', fontSize:18}}>{formatCurrency((pendingOrderData && pendingOrderData.finalTotal) ? pendingOrderData.finalTotal : grandTotal)}</div></div>
                             </div>
                             <div style={{marginTop:18, display:'flex', justifyContent:'center'}}>
-                                <button type="button" className='btn' onClick={()=>finalizeOnlinePayment()} style={{background:'#c62828', color:'#fff', padding:'10px 24px', borderRadius:8}}>Xác nhận</button>
+                                <button type="button" className='btn' onClick={()=>finalizeOnlinePayment()} style={{background:'#c62828', color:'#fff', padding:'10px 24px', borderRadius:8}}>Đặt hàng</button>
                             </div>
                         </div>
                     </div>

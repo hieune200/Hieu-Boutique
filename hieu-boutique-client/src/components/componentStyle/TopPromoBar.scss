@@ -21,12 +21,13 @@ body.header-hidden .top-promo{
 }
 .top-promo{ transition: transform .26s ease; will-change: transform }
 .top-promo__inner{
-  max-width: 1200px;
-  margin: 0 auto;
+  /* make the inner row span the full viewport so items can sit flush to edges */
+  width: 100%;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  padding: 0; /* remove default padding so children can align to edges */
   height: 100%; /* fill the fixed bar height */
   box-sizing: border-box;
 }
@@ -34,6 +35,8 @@ body.header-hidden .top-promo{
   display: flex;
   align-items: center;
   gap: 12px;
+  /* keep content visually inset from the absolute viewport edge a little */
+  padding-left: 12px;
 }
 .top-promo__left .promo-text{
   display: inline-block;
@@ -57,6 +60,7 @@ body.header-hidden .top-promo{
   display: flex;
   gap: 20px;
   align-items: center;
+  padding-right: 12px;
 }
 .top-promo__right .hotline,
 .top-promo__right .shop{
@@ -74,7 +78,7 @@ body.header-hidden .top-promo{
 
 @media (max-width: 800px){
   .top-promo__inner{flex-direction:column;align-items:flex-start;gap:6px;height:auto;padding:10px}
-  .top-promo__right{align-self:stretch;justify-content:space-between;width:100%}
+  .top-promo__right{align-self:stretch;justify-content:space-between;width:100%;padding-right:12px}
 }
 
 /* make promo + header stick together and fixed at top */

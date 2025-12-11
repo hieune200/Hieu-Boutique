@@ -1,0 +1,37 @@
+{
+  "orderDay": "10 / 12 / 2025",
+  "deliveryDate": null,
+  "orderStatus": "pending",
+  "totalOder": 799000,
+  "checkout": "offline",
+  "orderList": [
+    {
+      "id": "692d4e4bf95254e43028f75a",
+      "title": "Áo khoác bomber nam",
+      "size": "M",
+      "color": "Đen",
+      "unitPrice": 799000,
+      "quantity": 1
+    }
+  ],
+  "shipping": {
+    "name": "Nguyễn Vinh Hiếu",
+    "phoneNumber": "0869600123",
+    "email": "nvhieu.20it10@vku.udn.vn",
+    "address": "242/10 Dien Bien Phu",
+    "province": "Tỉnh Hoà Bình",
+    "provinceCode": "17",
+    "district": "Huyện Yên Thủy",
+    "districtCode": "158",
+    "ward": "Xã Đoàn Kết",
+    "wardCode": "5380",
+    "note": "không"
+  },
+  "couponCode": "HB50K",
+  "couponDiscount": 50000,
+  "subtotal": 799000,
+  "subtotalAfterDiscount": 749000,
+  "shippingFee": 0,
+  "finalTotal": 749000,
+  "orderCode": "HBVK33CK5M"
+}

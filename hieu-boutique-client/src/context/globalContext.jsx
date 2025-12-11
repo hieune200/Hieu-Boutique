@@ -6,6 +6,7 @@ const globalContext = createContext();
 const GlobalProvider = ({ children }) => {
     const initialUser = (localStorage.getItem("userID") || sessionStorage.getItem("userID") || null)
     const [ ctUserID, setCtUserID] = useState(initialUser);
+    const [ serverError, setServerError ] = useState(null)
     const [ appliedCoupon, setAppliedCoupon ] = useState(() => {
         try{
             const raw = localStorage.getItem('appliedCoupon')
@@ -33,6 +34,7 @@ const GlobalProvider = ({ children }) => {
         ctUserID,
         getUserID
         , appliedCoupon, applyCoupon, clearCoupon
+        , serverError, setServerError
     }
 
     return (

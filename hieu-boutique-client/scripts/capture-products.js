@@ -20,7 +20,7 @@ async function findServer(){
   const ports = [5173,5174,5175,5176,5177,5178];
   for (const p of ports){
     // try http
-    // eslint-disable-next-line no-await-in-loop
+     
     if (await portIsOpen(p)) return p;
   }
   throw new Error('No local dev server detected on ports ' + ports.join(','));

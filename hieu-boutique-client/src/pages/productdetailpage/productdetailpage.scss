@@ -71,8 +71,9 @@
                 color: #807878;
             }
             .rating-sold{ margin-bottom: 8px }
-            .stars{ display:flex; align-items:center; gap:8px; color:#c60b0b }
-            .star{ color:#c60b0b; font-size:18px; margin-right:2px }
+            .stars{ display:flex; align-items:center; gap:8px }
+            .stars .star{ color:#000; font-size:18px; margin-right:2px }
+            .stars .star.active{ color:#c60b0b }
             .rating-count{ color:#333; font-size:14px }
             .sep{ margin: 0 8px; color:#999 }
             .sold{ color:#666; font-size:14px }
@@ -258,6 +259,37 @@
                     cursor: pointer;
                 }
             }
+            /* Review / delete button styles */
+            .productpage_reviews{
+                .review-item{
+                    .review-head{ font-size: 15px; display:flex; align-items:center; gap:12px }
+                    .review-body-item{ font-size: 15px; color:#222; }
+                    .review-images img{ border-radius:8px; width:120px; height:120px; object-fit:cover; display:block }
+                    .delete-review{
+                        display:inline-flex;
+                        align-items:center;
+                        gap:8px;
+                        background:#c60b0b; /* filled red */
+                        border: none;
+                        color:#fff;
+                        padding:6px 10px;
+                        border-radius:6px;
+                        cursor:pointer;
+                        transition: background .12s ease, box-shadow .12s ease, transform .08s ease;
+                        margin-left: 12px;
+                        flex-shrink: 0;
+                        height: 36px;
+                    }
+                    .delete-review:hover{
+                        background: #a50a0a;
+                        box-shadow: 0 8px 22px rgba(165,10,10,0.12);
+                        transform: translateY(-1px);
+                    }
+                    .delete-review:active{ transform: translateY(0) }
+                    .delete-review .delete-icon{ width:18px; height:18px; filter: brightness(0) invert(1) saturate(2) }
+                    .delete-review .delete-label{ font-size:14px; color:#fff; font-weight:700 }
+                }
+            }
             .warehouse{
                 margin: 15px 0 10px;
             }
@@ -398,7 +430,100 @@
         .description-block p{ margin: 0 0 12px 0; color: #444 }
         .description-block ul, .description-block ol{ margin-left: 18px; margin-bottom: 12px }
         .description-block li{ margin: 6px 0; color: #444 }
+
+    /* Reviews list styling */
+    .productpage_reviews{
+        padding: 18px calc(50% - 600px);
+        .reviews_top{ display:flex; gap:20px; align-items:flex-start; justify-content:space-between }
+        .rating-summary{ display:flex; flex-direction:column; gap:8px }
+        .score{ font-size:40px; color:#c60b0b; font-weight:800 }
+        .stars{ }
+        .stars .star{ color:#000 }
+        .stars .star.active{ color:#c60b0b }
+        .reviews-list{ margin-top:16px }
+        .review-item{ background:#fff; padding:14px; border-radius:10px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); margin-bottom:12px }
+        .review-item .review-head{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            flex-wrap:nowrap;
+            width:100%;
+        }
+        /* per-review stars: active = red, inactive = black */
+        .review-stars .star{ color:#000; font-size:16px }
+        .review-stars .star.active{ color:#c60b0b }
+        .review-head .review-stars{ display:inline-flex; gap:4px }
+        .review-images img{ width:120px; height:120px; object-fit:cover; border-radius:8px; box-shadow: 0 6px 18px rgba(0,0,0,0.06) }
+        .review-head .review-meta{ margin-left:auto; color:#666; font-size:13px; white-space:nowrap }
+        .delete-review{ display:inline-flex; align-items:center; gap:8px; background:#c60b0b; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; color:#fff; height:36px }
+        .delete-review .delete-icon{ width:18px; height:18px; filter: brightness(0) invert(1) }
+        .delete-review .delete-label{ font-size:13px; color:#fff; font-weight:700 }
     }
+    }
+
+/* Polished review styles for consistent, balanced layout */
+.productpage_reviews{
+    .reviews_top{ align-items:center }
+    .rating-summary{ align-items:flex-start }
+    .reviews_cta{ display:flex; align-items:center }
+    .btn-review{ 
+        background:#c60b0b; 
+        color:#fff; 
+        border: none; 
+        padding:10px 14px; 
+        border-radius:12px; 
+        font-weight:700; 
+        margin-left:12px; 
+        box-shadow: 0 8px 20px rgba(198,11,11,0.12);
+        transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+    .btn-review:hover{ background:#a50a0a; transform: translateY(-2px); box-shadow: 0 14px 36px rgba(165,10,10,0.12) }
+
+    .review-item{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        padding:16px;
+        border-radius:12px;
+        transition: box-shadow .18s ease, transform .12s ease;
+    }
+    .review-item:hover{ box-shadow: 0 14px 38px rgba(0,0,0,0.08); transform: translateY(-4px) }
+
+    .review-head{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        width:100%;
+        flex-wrap:nowrap;
+    }
+    .review-avatar{
+        width:44px; height:44px; border-radius:50%; overflow:hidden; flex:0 0 44px; background:#f6f6f6; display:flex; align-items:center; justify-content:center
+    }
+    .review-avatar img{ width:100%; height:100%; object-fit:cover }
+
+    .review-name{ font-weight:800; font-size:16px; color:#111 }
+    .review-stars{ display:inline-flex; gap:6px; margin-left:6px }
+    .review-stars .star{ font-size:15px; color:#000 }
+    .review-stars .star.active{ color:#c60b0b }
+
+    .review-meta{ margin-left:auto; color:#777; font-size:13px; white-space:nowrap }
+
+    .review-body-item{ font-size:15px; color:#333; line-height:1.6; margin-top:4px }
+
+    .review-images{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px }
+    .review-images img{ width:108px; height:108px; object-fit:cover; border-radius:8px }
+
+    .delete-review{ margin-left:12px; flex-shrink:0; display:inline-flex; align-items:center; gap:8px; background:#c60b0b; color:#fff; border:none; padding:6px 10px; border-radius:8px; height:36px }
+    .delete-review .delete-icon{ width:18px; height:18px; filter: brightness(0) invert(1) }
+
+    @media (max-width: 900px){
+        .productpage_reviews{ padding: 12px 20px }
+        .review-head{ flex-wrap:wrap }
+        .review-meta{ margin-left:0; order:3; width:100%; text-align:left; }
+        .delete-review{ order:4; margin-left:0 }
+        .review-images img{ width:96px; height:96px }
+    }
+}
         &_list{
             width: 100%;
             padding: 8px calc(50% - 600px);
@@ -431,28 +556,29 @@
     }
 
     .recent-mini-card{
+        /* Match related product card sizing and spacing */
         display: flex;
         flex-direction: column;
         gap: 8px;
         padding: 12px;
         background:#fff;
-        border-radius:10px;
+        border-radius:12px;
         text-decoration: none;
         color: inherit;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-        min-height: 214px; /* reduced to ~2/3 of previous (320px -> ~214px) */
-        justify-content: space-between;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+        min-height: 280px; /* match .productcard min-height */
+        justify-content: flex-start;
         position: relative;
         overflow: hidden;
-        transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s cubic-bezier(.2,.9,.2,1);
+        transition: transform .18s ease, box-shadow .18s ease;
         will-change: transform;
         background-clip: padding-box;
     }
-    .recent-mini-card .mini-img{ flex: 0 0 auto; display:block; width:100%; aspect-ratio:1; overflow:hidden; border-radius:8px }
-    .recent-mini-card .mini-img img{ width:100%; height:100%; object-fit:cover; display:block; transition: transform .36s cubic-bezier(.2,.9,.2,1); transform-origin: center center }
-    .recent-mini-card .mini-meta{ display:flex; flex-direction:column; gap:6px; margin-top:6px; align-items: flex-start; text-align:left }
-    .recent-mini-card .meta-top{ display:flex; align-items:center; gap:12px; width:100% }
-    .recent-mini-card .mini-title{ font-size:15px; font-weight:700; color:#111; line-height:1.2 }
+    .recent-mini-card .mini-img{ flex: 0 0 auto; display:block; width:100%; overflow:hidden; border-radius:8px }
+    .recent-mini-card .mini-img img{ width:100%; height:200px; object-fit:cover; display:block; transition: transform .18s ease; transform-origin: center center }
+    .recent-mini-card .mini-meta{ display:flex; flex-direction:column; gap:8px; margin-top:6px; align-items: flex-start; text-align:left }
+    .recent-mini-card .meta-top{ display:flex; align-items:center; gap:8px; width:100% }
+    .recent-mini-card .mini-title{ font-size:16px; font-weight:700; color:#111; line-height:1.2 }
     .recent-mini-card .mini-price{ color:#c60b0b; font-weight:800 }
     /* small muted product code line under title — if you later add code in JSX, this will style it */
     .recent-mini-card .mini-code{ color:#888; font-size:13px; margin-top:4px }
@@ -463,22 +589,22 @@
     .recent-mini-card .mini-sold{ color:#777; font-size:13px; margin-top:6px }
     .recent-mini-card .discount-badge{
         position: absolute;
-        right: 10px;
-        top: 10px;
-        background: #c60b0b;
+        right: 12px;
+        top: 12px;
+        background: #d32f2f;
         color: #fff;
-        width: 20px; /* user requested size */
-        height: 20px; /* user requested size */
+        width: 40px; /* match .productcard discount size */
+        height: 40px; /* match .productcard discount size */
         border-radius: 50%;
         display:flex;
         align-items:center;
         justify-content:center;
         font-weight:700;
-        font-size:10px; /* small text to fit */
+        font-size:14px; /* larger to match product card */
         line-height:1;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+        box-shadow: 0 10px 22px rgba(0,0,0,0.12);
         z-index: 10;
-        padding: 0; /* minimize inner white area */
+        padding: 0;
     }
     /* limit any icon size inside the badge to match new diameter */
     .recent-mini-card .discount-badge svg,
@@ -487,21 +613,21 @@
         height:12px;
         display:block;
     }
-    .recent-mini-card .mini-thumbs{ display:flex; gap:8px; justify-content:flex-start; margin-top:8px }
-    .recent-mini-card .mini-thumbs img{ width:34px; height:34px; object-fit:cover; border-radius:50%; border:2px solid #fff; box-shadow:0 6px 18px rgba(0,0,0,0.06) }
+    .recent-mini-card .mini-thumbs{ display:flex; gap:6px; justify-content:flex-start; margin-top:8px }
+    .recent-mini-card .mini-thumbs img{ width:28px; height:28px; object-fit:cover; border-radius:50%; border:1px solid rgba(0,0,0,0.08); box-shadow:0 6px 18px rgba(0,0,0,0.06) }
 
     /* Hover / focus effects for interactive feel */
     .recent-mini-card:hover{
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 22px 48px rgba(0,0,0,0.18);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.06);
     }
     .recent-mini-card:focus-within{
-        transform: translateY(-6px) scale(1.01);
-        box-shadow: 0 18px 40px rgba(0,0,0,0.14);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.05);
     }
     .recent-mini-card:hover .mini-img img,
     .recent-mini-card:focus-within .mini-img img{
-        transform: scale(1.06);
+        transform: scale(1.02);
     }
     .recent-mini-card .discount-badge{
         transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s cubic-bezier(.2,.9,.2,1), opacity .22s ease;

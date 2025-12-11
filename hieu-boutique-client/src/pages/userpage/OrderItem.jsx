@@ -15,7 +15,20 @@ function OrderItem ({item, index: _index}){
     }, [getData])
     return(
         <Link to={`/productdetail/${item.category}/${item.id}`} className='item'>
-            <img src={data?.img} className='pointer' alt="item" />
+            {
+                (() => {
+                    // Prefer fresh product image from DB (data), fall back to image captured in order (item.img), then placeholder
+                    let src = '/ava.svg'
+                    if (data) {
+                        if (Array.isArray(data.img) && data.img.length) src = data.img[0]
+                        else if (typeof data.img === 'string' && data.img) src = data.img
+                    } else if (item && item.img) {
+                        if (Array.isArray(item.img) && item.img.length) src = item.img[0]
+                        else if (typeof item.img === 'string' && item.img) src = item.img
+                    }
+                    return <img src={src} className='pointer' alt="item" onError={(e)=>{ try{ e.currentTarget.src = '/ava.svg' }catch(err){ console.warn(err) } }} />
+                })()
+            }
             <p className="infor">
                 <span>{data?.title}</span>
                 <span>Size: {item?.size}</span>

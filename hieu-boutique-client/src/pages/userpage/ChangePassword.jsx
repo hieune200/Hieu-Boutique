@@ -7,14 +7,25 @@ const ChangePassword = ({ onChangePassword }) => {
     const [confirmPwd, setConfirmPwd] = useState('')
 
     const { showToast } = useToast()
-    const submit = (e)=>{
+    const [isSaving, setIsSaving] = useState(false)
+    const submit = async (e)=>{
         e.preventDefault()
         if (!newPwd || newPwd.length < 6) return showToast('Mật khẩu mới phải ít nhất 6 ký tự', 'error')
         if (newPwd !== confirmPwd) return showToast('Mật khẩu xác nhận không khớp', 'error')
-        // Ideally call API — here we'll call onChangePassword if provided
-        onChangePassword && onChangePassword({ currentPwd, newPwd })
-        showToast('Mật khẩu đã được cập nhật (mô phỏng)', 'success')
-        setCurrentPwd(''); setNewPwd(''); setConfirmPwd('')
+        setIsSaving(true)
+        try{
+            if (onChangePassword){
+                // onChangePassword is expected to return a promise (persistUserData)
+                await onChangePassword({ currentPwd, newPwd })
+            }
+            showToast('Mật khẩu đã được cập nhật', 'success')
+            setCurrentPwd(''); setNewPwd(''); setConfirmPwd('')
+        }catch(err){
+            console.error('ChangePassword submit error', err)
+            showToast('Cập nhật mật khẩu thất bại', 'error')
+        }finally{
+            setIsSaving(false)
+        }
     }
 
     return (
@@ -29,7 +40,7 @@ const ChangePassword = ({ onChangePassword }) => {
                 <label>Xác nhận mật khẩu mới</label>
                 <input type="password" value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} />
                 <div style={{marginTop:12}}>
-                    <button className="btn" type="submit">Cập nhật</button>
+                    <button className="btn" type="submit" style={{ background: isSaving ? '#d32f2f' : undefined, color: isSaving ? '#fff' : undefined }}>{ isSaving ? 'Đang cập nhật...' : 'Cập nhật' }</button>
                 </div>
             </form>
         </div>

@@ -15,6 +15,33 @@ import { globalContext } from '../context/globalContext'
 import './componentStyle/Header.scss'
 import { useToast } from './ToastProvider'
 
+// Helper: render sub-collections inside mega-menu
+function collection (arr, categoryPath) {
+    if (!Array.isArray(arr) || arr.length === 0) return null
+    return arr.map((c) => {
+        return (
+            <li className='nav-t2_menu_collection_opt' key={`${categoryPath}::${c}`}>
+                <Link to={`/shop/${encodeURIComponent(categoryPath)}/${encodeURIComponent(c)}`}>
+                    <span className="collection-label">{c}</span>
+                </Link>
+            </li>
+        )
+    })
+}
+
+function productLinks(products){
+    if (!Array.isArray(products) || products.length === 0) return null
+    return (
+        <ul className='nav-t2_menu_products'>
+            {products.map(p => (
+                <li key={p._id} className='nav-t2_menu_product_opt'>
+                    <Link to={`/productdetail/${p.category}/${p._id}`}>{p.title}</Link>
+                </li>
+            ))}
+        </ul>
+    )
+}
+
 const Header = ()=>{
     const nav = useNavigate()
     const location = useLocation()
@@ -74,34 +101,7 @@ const Header = ()=>{
         return ()=> document.removeEventListener('pointerdown', onDoc)
     },[])
 
-    // fetch notifications when opening (try API, fallback to demo data)
-    async function loadNotifications(){
-        try{
-            const res = await fetch('/api/user/notifications', { credentials: 'include' })
-            if (res && res.ok){
-                const data = await res.json()
-                if (Array.isArray(data)){
-                    // apply any local overrides (fallback persistence) for this user
-                    const overrides = getLocalReadOverrides()
-                    const deleted = getLocalDeletedOverrides()
-                    const merged = data.map(n => ({ ...n, read: (overrides && overrides[n.id] !== undefined) ? overrides[n.id] : !!n.read }))
-                    // remove locally-deleted notifications
-                    const filtered = merged.filter(n => !(deleted && deleted[n.id]))
-                    // keep all (read + unread) so user can see read items grayed
-                    return setNotifications(filtered)
-                }
-            }
-        }catch(e){ /* ignore and fallback */ }
-        // fallback demo notifications (apply overrides if any)
-        const fallback = [
-            { id: 'local-1', title: 'Chào mừng!', time: '1 giờ trước', body: 'Cảm ơn bạn đã ghé HIEU BOUTIQUE. Xem ưu đãi mới.' },
-            { id: 'local-2', title: 'Đơn hàng #1234', time: '2 ngày trước', body: 'Đơn hàng của bạn đã được xác nhận.' }
-        ]
-        const overrides = getLocalReadOverrides()
-        const deleted = getLocalDeletedOverrides()
-        // only show unread in panel
-        setNotifications(fallback.map(n => ({ ...n, read: (overrides && overrides[n.id] !== undefined) ? overrides[n.id] : false })).filter(n => !(deleted && deleted[n.id])))
-    }
+    
 
     // LocalStorage helpers for fallback persistence when API isn't available
     function localStorageKey(){
@@ -147,13 +147,84 @@ const Header = ()=>{
         }catch(e){ /* ignore */ }
     }
 
-    // keep notifications up-to-date when user becomes available
+    // helper: treat notifications that reference orders/reviews/products as account-specific
+    function isPersonalNotification(n){
+        if (!n) return false
+        const personalTypes = new Set(['order','order_received','review','order_update','order_cancelled'])
+        if (n.type && personalTypes.has(String(n.type))) return true
+        if (n.orderCode || n.productId || n.reviewId) return true
+        return false
+    }
+
+    function sortNotificationsArray(arr){
+        if (!Array.isArray(arr)) return arr || []
+        return arr.slice().sort((a,b)=>{
+            try{
+                const pa = isPersonalNotification(a)
+                const pb = isPersonalNotification(b)
+                if (pa !== pb) return pa ? -1 : 1 // personal first
+                const ta = a && (a.createdAt || a.time || a.date) ? new Date(a.createdAt || a.time || a.date) : new Date(0)
+                const tb = b && (b.createdAt || b.time || b.date) ? new Date(b.createdAt || b.time || b.date) : new Date(0)
+                return tb - ta
+            }catch(e){ return 0 }
+        }).slice(0,50)
+    }
+
+    // fetch notifications when opening (try API, fallback to demo data)
+    function normalizeNotification(n){
+        if (!n) return n
+        const id = n.id || (n._id && (n._id.$oid || String(n._id))) || String(n._id || n.id || '')
+        const createdAt = n.createdAt || n.time || n.date || null
+        return { ...n, id, createdAt }
+    }
+
+    async function loadNotifications(){
+        try{
+            const API_BASE = import.meta.env.VITE_API_URL || ''
+            if (ctUserID) {
+                const base = API_BASE.replace(/\/$/, '')
+                const res = await fetch(`${base}/auth/notifications/${encodeURIComponent(ctUserID)}`, { credentials: 'include' })
+                if (res && res.ok){
+                    const raw = await res.json()
+                    const data = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : null)
+                    if (Array.isArray(data)){
+                        const overrides = getLocalReadOverrides()
+                        const deleted = getLocalDeletedOverrides()
+
+                        const mergedServer = data.map(d => normalizeNotification(d)).map(n => ({ ...n, read: (overrides && overrides[n.id] !== undefined) ? overrides[n.id] : !!n.read }))
+                        const filteredServer = mergedServer.filter(n => !(deleted && deleted[n.id]))
+
+                        const pendingKey = ctUserID ? `hb_notifications_pending_${ctUserID}` : 'hb_notifications_pending_anonymous'
+                        let pending = []
+                        try{ pending = JSON.parse(localStorage.getItem(pendingKey) || '[]') }catch(e){ pending = [] }
+                        pending = (Array.isArray(pending) ? pending : []).map(p => ({ ...p, id: p.id || p._id || String(p._id || '') }))
+
+                        const serverIds = new Set(filteredServer.map(s => String(s.id)))
+                        const pendingNotOnServer = pending.filter(p => !serverIds.has(String(p.id)))
+
+                        const merged = [...pendingNotOnServer, ...filteredServer]
+                        try{ localStorage.setItem(pendingKey, JSON.stringify(pendingNotOnServer)) }catch(e){}
+
+                        const sorted = sortNotificationsArray(merged)
+                        try{ localStorage.setItem(`hb_notifications_cache_${ctUserID}`, JSON.stringify(sorted)) }catch(e){}
+                        return setNotifications(sorted)
+                    }
+                }
+            }
+        }catch(e){ /* ignore and fallback */ }
+        // fallback demo notifications (apply overrides if any)
+        const fallback = [
+            { id: 'local-1', title: 'Chào mừng!', time: '1 giờ trước', body: 'Cảm ơn bạn đã ghé HIEU BOUTIQUE. Xem ưu đãi mới.' },
+            { id: 'local-2', title: 'Đơn hàng #1234', time: '2 ngày trước', body: 'Đơn hàng của bạn đã được xác nhận.' }
+        ]
+        const overrides = getLocalReadOverrides()
+        const deleted = getLocalDeletedOverrides()
+        const fallbackProcessed = fallback.map(n => ({ ...n, read: (overrides && overrides[n.id] !== undefined) ? overrides[n.id] : false })).filter(n => !(deleted && deleted[n.id]))
+        try{ localStorage.setItem(`hb_notifications_cache_${ctUserID || 'anonymous'}`, JSON.stringify(sortNotificationsArray(fallbackProcessed))) }catch(e){}
+        setNotifications(sortNotificationsArray(fallbackProcessed))
+    }
     useEffect(()=>{
-        if (!ctUserID) {
-            setNotifications([])
-            return
-        }
-        // load on login/refresh
+        // load notifications on login state change — when logged out, load cached/fallback items
         loadNotifications()
     }, [ctUserID])
 
@@ -162,40 +233,50 @@ const Header = ()=>{
             function onNew(e){
                 const payload = e && e.detail ? e.detail : null
                 if (!payload) return
-                setNotifications(prev => [payload, ...prev].slice(0,50))
-            }
+                    console.debug('new-notification received in header', payload)
+                    setNotifications(prev => {
+                        // prepend new unread notification and keep only unread items, then sort
+                        try{
+                            const merged = [payload, ...(prev || []).filter(x => !x.read && String(x.id) !== String(payload.id))]
+                            return sortNotificationsArray(merged)
+                        }catch(e){ return [payload] }
+                    })
+                    // refresh from server to ensure server-backed notifications are shown (if user is logged in)
+                    try{ if (ctUserID) loadNotifications().then(()=> console.debug('loadNotifications() refreshed after new-notification')).catch(()=>{}) }catch(e){}
+                    
+                }
+
             window.addEventListener('new-notification', onNew)
             return ()=> window.removeEventListener('new-notification', onNew)
         }, [])
 
-    const unreadCount = notifications.filter(n => !n.read).length
+    const unreadCount = ctUserID ? (notifications || []).filter(n => !n.read).length : 0
 
-    // mark a single notification read (optimistic)
-    // mark a single notification read -> update in-place and persist
+    // mark a single notification read (optimistic) — set read flag instead of removing
     async function markRead(n){
         if (!n) return
-        // update UI immediately
-        setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
+        // mark as read in UI (grayed)
+        setNotifications(prev => (prev || []).map(x => String(x.id) === String(n.id) ? ({ ...x, read: true }) : x))
         // persist locally immediately so toggling/refresh won't revert
         setLocalReadOverride(n.id, true)
         try{
-            await fetch(`/api/user/notifications/${encodeURIComponent(n.id)}/read`, { method: 'POST', credentials: 'include' })
-        }catch(e){
-            // already stored locally; nothing more to do
-        }
+            const API_BASE = import.meta.env.VITE_API_URL || ''
+            const base = API_BASE.replace(/\/$/, '')
+            const createdAtPayload = n && n.createdAt ? (typeof n.createdAt === 'string' ? n.createdAt : (new Date(n.createdAt)).toISOString()) : (new Date()).toISOString()
+            await fetch(`${base}/auth/notifications/mark-read`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: ctUserID, createdAt: createdAtPayload }) })
+        }catch(e){ /* ignore network errors — local override keeps UX */ }
+        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){}
     }
 
     // mark a single notification unread (optimistic)
     async function markUnread(n){
         if (!n) return
-        setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: false } : x))
+        // mark as unread in UI
+        setNotifications(prev => (prev || []).map(x => String(x.id) === String(n.id) ? ({ ...x, read: false }) : x))
         // persist locally immediately
         setLocalReadOverride(n.id, false)
-        try{
-            await fetch(`/api/user/notifications/${encodeURIComponent(n.id)}/unread`, { method: 'POST', credentials: 'include' })
-        }catch(e){
-            // already stored locally
-        }
+        try{ /* no server API for unread; local override is sufficient */ }catch(e){}
+        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){}
     }
 
     // toggle read/unread
@@ -207,15 +288,21 @@ const Header = ()=>{
 
     // mark all read (keep items visible but muted)
     async function markAllRead(){
-        const ids = notifications.map(n=>n.id)
-        setNotifications(prev => prev.map(x => ({ ...x, read: true })))
+        const ids = (notifications || []).map(n => n.id)
+        // mark all as read in UI
+        setNotifications(prev => (prev || []).map(x => ({ ...x, read: true })))
         // persist locally immediately
         try{ ids.forEach(id => setLocalReadOverride(id, true)) }catch(err){ }
         try{
-            await fetch('/api/user/notifications/mark-all-read', { method: 'POST', credentials: 'include' })
-        }catch(e){
-            // local overrides already saved
-        }
+            // attempt server calls but ignore failures — local overrides keep UX consistent
+            await Promise.allSettled((notifications || []).map(item => {
+                const API_BASE = import.meta.env.VITE_API_URL || ''
+                const base = API_BASE.replace(/\/$/, '')
+                const createdAtPayload = item && item.createdAt ? (typeof item.createdAt === 'string' ? item.createdAt : (new Date(item.createdAt)).toISOString()) : (new Date()).toISOString()
+                return fetch(`${base}/auth/notifications/mark-read`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: ctUserID, createdAt: createdAtPayload }) })
+            }))
+        }catch(e){ /* ignore */ }
+        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){}
     }
 
     // delete a single notification
@@ -225,11 +312,7 @@ const Header = ()=>{
         setNotifications(prev => prev.filter(x => x.id !== n.id))
         // persist deletion locally immediately so reload won't restore it
         try{ setLocalDeletedOverride(n.id) }catch(err){ }
-        try{
-            await fetch(`/api/user/notifications/${encodeURIComponent(n.id)}`, { method: 'DELETE', credentials: 'include' })
-        }catch(e){
-            // already recorded locally
-        }
+        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){}
     }
 
     function handleNotifItemClick(n){
@@ -455,28 +538,33 @@ const Header = ()=>{
                     </div>
                 </div>
                 <div className="feature_notif feature_btn pointer" onClick={async ()=> {
-                    // open panel for both logged-in and not-logged-in users
+                    // If not logged in, send user to login instead of showing notifications
+                    if (!ctUserID) { goToLogin(); return }
+                    // toggle panel and load notifications when opening
                     setNotifOpen(v=>!v)
-                    // if toggling open and user is logged in, load notifications
                     if (!notifOpen && ctUserID){
                         loadNotifications()
                     }
-                    // if not logged in, we still open panel which will show a login prompt
                 }} aria-label="Thông báo">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="feature-img">
                         <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z" fill="#111"/>
                         <path d="M18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 10-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#111"/>
                     </svg>
-                    { unreadCount > 0 && (
+                    { ctUserID && unreadCount > 0 && (
                         <div className="notif-badge" title={`${unreadCount} thông báo chưa đọc`}>{unreadCount>99? '99+': unreadCount}</div>
                     )}
                 </div>
 
                 {/* Notification panel rendered at top-right when notifOpen */}
+                {
+                    // compute whether we have any cached/fallback notifications (used to decide empty panel messaging)
+                }
                 <NotificationPanel
                     open={notifOpen}
                     onClose={()=> setNotifOpen(false)}
                     notifications={ctUserID ? notifications : []}
+                    hasLocalNotifications={ctUserID ? (() => { try{ const key = `hb_notifications_cache_${ctUserID}`; return !!localStorage.getItem(key) }catch(e){ return false } })() : false}
+                    maxVisible={3}
                     onRequireLogin={() => goToLogin()}
                     onToggleRead={(n)=> toggleRead(n)}
                     onMarkAllRead={()=> markAllRead()}
@@ -504,30 +592,6 @@ const Header = ()=>{
         </header>
         <BackToTop />
         </>
-    )
-}
-    function collection (arr, categoryPath) {
-        if (!Array.isArray(arr) || arr.length === 0) return null
-        return arr.map((c) => {
-                return (
-                <li className='nav-t2_menu_collection_opt' key={`${categoryPath}::${c}`}>
-                    <Link to={`/shop/${encodeURIComponent(categoryPath)}/${encodeURIComponent(c)}`}>
-                        <span className="collection-label">{c}</span>
-                    </Link>
-                </li>
-            )})
-    }
-
-function productLinks(products){
-    if (!Array.isArray(products) || products.length === 0) return null
-    return (
-        <ul className='nav-t2_menu_products'>
-            {products.map(p => (
-                <li key={p._id} className='nav-t2_menu_product_opt'>
-                    <Link to={`/productdetail/${p.category}/${p._id}`}>{p.title}</Link>
-                </li>
-            ))}
-        </ul>
     )
 }
 

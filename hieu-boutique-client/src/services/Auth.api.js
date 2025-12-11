@@ -72,10 +72,34 @@ async function checkoutAPI (data){
 
 async function getOrder (){
     const id = localStorage.getItem("userID") || sessionStorage.getItem("userID")
-    const res = await fetch(`${url}/order/list/${id}`)
+    const headers = {}
+    if (id) headers['user-id'] = id
+    const res = await fetch(`${url}/order/list/${id}`, { headers })
     .then(res => res.json())
     .catch(err=> console.log(err))
     return res
+}
+
+async function cancelOrderAPI(orderCode){
+    const id = localStorage.getItem("userID") || sessionStorage.getItem("userID")
+    const headers = { 'Content-Type': 'application/json' }
+    if (id) headers['user-id'] = id
+    try{
+        const r = await fetch(`${url}/order/cancel`, { method: 'POST', headers, body: JSON.stringify({ orderCode }) })
+        if (!r) return { status: 500, message: 'No response from server' }
+        return await r.json()
+    }catch(err){ console.error('cancelOrderAPI error', err); return { status: 500, message: 'Network error' } }
+}
+
+async function confirmReceivedAPI(orderCode){
+    const id = localStorage.getItem("userID") || sessionStorage.getItem("userID")
+    const headers = { 'Content-Type': 'application/json' }
+    if (id) headers['user-id'] = id
+    try{
+        const r = await fetch(`${url}/order/confirm`, { method: 'POST', headers, body: JSON.stringify({ orderCode }) })
+        if (!r) return { status: 500, message: 'No response from server' }
+        return await r.json()
+    }catch(err){ console.error('confirmReceivedAPI error', err); return { status: 500, message: 'Network error' } }
 }
 
 async function socialLoginAPI (data){
@@ -134,4 +158,4 @@ async function createSocialPlaceholderAPI (data){
     }
 }
 
-export { registerAPI, loginAPI, getInfor, updateInfor, checkoutAPI, getOrder, socialLoginAPI, createSocialPlaceholderAPI, forgotPasswordRequest, resetPassword };
+export { registerAPI, loginAPI, getInfor, updateInfor, checkoutAPI, getOrder, cancelOrderAPI, confirmReceivedAPI, socialLoginAPI, createSocialPlaceholderAPI, forgotPasswordRequest, resetPassword };

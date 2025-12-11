@@ -98,7 +98,7 @@ export default function QuickAddPanelFixed({ product, image, onClose }) {
         <div className="quickadd-grid">
           <div className="quickadd-image">
             <button className="qa-arrow qa-prev" onClick={() => setSelectedIndex((selectedIndex - 1 + imgs.length) % imgs.length)} aria-label="Prev image">‹</button>
-            <img src={selectedImg || imgs[0] || ''} alt={product?.title} />
+            <img src={selectedImg || imgs[0] || '/ava.svg'} alt={product?.title} onError={(e)=>{ try{ e.currentTarget.src = '/ava.svg' }catch(err){ console.warn(err) } }} />
             <button className="qa-arrow qa-next" onClick={() => setSelectedIndex((selectedIndex + 1) % imgs.length)} aria-label="Next image">›</button>
           </div>
 
@@ -113,7 +113,7 @@ export default function QuickAddPanelFixed({ product, image, onClose }) {
               <div className="qa-swatches" style={{ marginTop: 12 }}>
                 {swatches.map((s, i) => (
                   <button key={i} className={"swatch" + (selectedIndex === i ? ' active' : '')} onClick={() => setSelectedIndex(i)} style={{ marginRight: 8 }}>
-                    <img src={s} alt={`swatch-${i}`} />
+                    <img src={s || '/ava.svg'} alt={`swatch-${i}`} onError={(e)=>{ try{ e.currentTarget.src = '/ava.svg' }catch(err){ console.warn(err) } }} />
                   </button>
                 ))}
               </div>
@@ -150,7 +150,7 @@ export default function QuickAddPanelFixed({ product, image, onClose }) {
                             style={imgForColor ? {} : { background: colorHex || val }}
                           aria-label={displayName}
                         >
-                          {imgForColor ? <img src={imgForColor} alt={displayName} /> : (<span className="color-dot" />)}
+                          {imgForColor ? <img src={imgForColor} alt={displayName} onError={(e)=>{ try{ e.currentTarget.src = '/ava.svg' }catch(err){ console.warn(err) } }} /> : (<span className="color-dot" />)}
                         </button>
                         <div className="color-name">{displayName}</div>
                       </div>
@@ -180,7 +180,7 @@ export default function QuickAddPanelFixed({ product, image, onClose }) {
 
               <div style={{ display: 'flex', gap: 12 }}>
                 <button className="qa-add" onClick={() => addToCart(true)}><img src={cartIcon} alt="cart" />&nbsp;Thêm giỏ hàng</button>
-                <button className="qa-buy" onClick={() => addToCart(true)}>MUA NGAY</button>
+                <button className="qa-buy" onClick={() => { addToCart(true); nav('/checkout') }}>MUA NGAY</button>
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { ensureConnected, getCouponsCollection, getAccountsCollection } from '../models/mongoClient.model.js'
+import { makeServerErrorDirect } from '../utils/errorHelper.js'
 
 // Note: this controller will try to use a `coupons` collection if available.
 // Coupon document schema (recommended):
@@ -18,8 +19,7 @@ export const getCoupons = async (req, res) => {
     return res.json(out)
   }
   catch(err){
-    console.error('getCoupons error', err)
-    return res.status(500).json({ error: 'Internal server error' })
+    return makeServerErrorDirect(res, req, err, 'getCoupons error')
   }
 }
 
@@ -118,7 +118,6 @@ export const applyCoupon = async (req, res) => {
     return res.json({ id: applied._id.toString(), code: applied.code, discount: applied.discount || 0, title: applied.title, expiry: applied.expiry, freeShipping: !!applied.freeShipping, shipDiscount: applied.shipDiscount || 0 })
   }
   catch(err){
-    console.error('applyCoupon error', err)
-    return res.status(500).json({ error: 'Internal server error' })
+    return makeServerErrorDirect(res, req, err, 'applyCoupon error')
   }
 }

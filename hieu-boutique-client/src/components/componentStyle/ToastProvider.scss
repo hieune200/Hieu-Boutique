@@ -1,6 +1,7 @@
 .hb-toast-root {
   position: fixed;
-  top: 18px;
+  /* place toast below the promo + header so it doesn't appear over the header by default */
+  top: calc(var(--promo-height, 44px) + var(--header-height, 72px) + 12px);
   right: 18px;
   z-index: 9999;
   display: flex;
@@ -82,6 +83,11 @@
 
 /* small responsive tweak */
 @media (max-width: 600px){
-  .hb-toast-root { left: 12px; right: 12px; top: 12px }
+  .hb-toast-root { left: 12px; right: 12px; top: calc(var(--promo-height-mobile, 44px) + var(--header-height-mobile, 56px) + 8px) }
   .hb-toast { min-width: auto }
+}
+
+/* When header is hidden (user scrolled down), allow toasts to sit at the very top */
+body.header-hidden .hb-toast-root {
+  top: 12px;
 }

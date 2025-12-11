@@ -1,1 +1,33 @@
-.notif-panel{ /* styles live in Header.scss; this file exists so import won't fail */ }
+.notif-panel{
+	width: 420px;
+	max-width: calc(100vw - 40px);
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+.notif-panel .notif-panel-body{
+	padding: 8px;
+	/* show at most ~3 items in the panel; additional items are visible on Notifications page */
+	max-height: 220px; /* adjust to fit 2-3 items depending on item height */
+	overflow-y: auto;
+}
+.notif-panel .notif-item{
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: #fff;
+	margin-bottom: 8px;
+	box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+.notif-panel .notif-item.read{ opacity: 0.6 }
+.notif-panel .notif-panel-header, .notif-panel .notif-panel-footer{ padding: 10px 12px; }
+.notif-panel .notif-panel-header{ display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #f2f2f2 }
+.notif-panel .notif-panel-footer{ border-top:1px solid #f2f2f2; font-size:12px; color:#666 }
+.notif-panel .notif-left .notif-cat{ width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:#fdeef0; color:#c02; font-weight:700 }
+.notif-panel .notif-main{ padding-left:8px }
+
+/* Hide the left category badge in the compact header panel (not needed) */
+.notif-panel .notif-left{ display: none !important }
+.notif-panel .notif-actions{ display:flex; gap:6px }

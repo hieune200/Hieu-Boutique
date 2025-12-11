@@ -8,7 +8,7 @@ import SizeGuide from '../../components/SizeGuide'
 import ReviewModal from '../../components/ReviewModal'
 import trashIcon from '../../assets/icons/trash-red.svg'
 import { productDetail, suggestListProduct } from '../../services/products.api'
-import { updateProductDetails, purchaseProduct } from '../../services/products.api'
+import { updateProductDetails } from '../../services/products.api'
 import cartIcon from '../../assets/imgs/common/cart-icon.png' 
 import greenStar from '../../assets/imgs/common/green-star.png' 
 import returnIcon from '../../assets/imgs/common/return-icon.png' 
@@ -149,6 +149,43 @@ const ProductDetailPage = ()=>{
     }, [data, id])
 
     const [fetchError, setFetchError] = useState('')
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    // Normalize API host: prefer origin (scheme + host + port) to avoid accidental path suffixes
+    const API_HOST = (()=>{
+        try{ const u = new URL(String(API_BASE)); return u.origin }catch(e){ return String(API_BASE).replace(/\/+$/,'') }
+    })()
+
+    // normalize src returned from API (server stores '/uploads/...' paths)
+    const normalizeSrc = (s) => {
+        if (!s) return s
+        try{
+            const str = String(s)
+            // keep absolute http/https as-is
+            if (/^https?:\/\//i.test(str)) return str
+            // keep data/blob URLs unchanged
+            if (/^data:/i.test(str)) return str
+            if (/^blob:/i.test(str)) return str
+            // protocol-relative
+            if (str.startsWith('//')) return `${window.location.protocol}${str}`
+            // server-returned absolute path like '/uploads/...'
+            if (str.startsWith('/')) return `${API_HOST}${str}`
+            // fallback: treat as relative to API
+            return `${API_HOST}/${str}`
+        }catch(e){ return s }
+    }
+
+    // decode JWT payload (best-effort, not verification) to check admin role client-side
+    const decodeTokenPayload = (token) => {
+        try{
+            if (!token) return null
+            const parts = String(token).split('.')
+            if (parts.length < 2) return null
+            const payload = parts[1]
+            // atob can throw on non-base64; wrap in try/catch
+            const json = window.atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+            try{ return JSON.parse(decodeURIComponent(escape(json))) }catch(e){ return JSON.parse(json) }
+        }catch(e){ return null }
+    }
     useEffect(()=>{
         if (data && Array.isArray(data?.prodData?.colors) && data.prodData.colors.length){
             setSelectedColor(prev => prev || data.prodData.colors[0])
@@ -159,13 +196,27 @@ const ProductDetailPage = ()=>{
     const location = useLocation()
     const [showLoginPrompt, setShowLoginPrompt] = useState(false)
     const { showToast } = useToast()
+    const _token = sessionStorage.getItem('token') || localStorage.getItem('token')
+    const tokenPayload = decodeTokenPayload(_token)
+    const isAdminClient = Boolean(tokenPayload && ((tokenPayload.role && String(tokenPayload.role).toLowerCase() === 'admin') || tokenPayload.isAdmin))
+
+    // If navigated with ?autoReview=1, open the review modal automatically
+    useEffect(()=>{
+        try{
+            const params = new URLSearchParams(location.search)
+            const auto = params.get('autoReview') || params.get('review')
+            if (auto && (auto === '1' || auto === 'true')){
+                setReviewModalOpen(true)
+            }
+        }catch(e){ /* ignore */ }
+    }, [location.search])
 
     // initialize main image when data arrives
     useEffect(()=>{
         if (!data) return
         const imgs = Array.isArray(data?.prodData?.img) ? data.prodData.img : (data?.prodData?.img ? [data.prodData.img] : [])
         const initial = (imgs && imgs.length) ? (imgs[0]) : null
-        setMainImgSrc(initial)
+        setMainImgSrc(normalizeSrc(initial))
     },[data])
 
     const triggerMainImageChange = (src)=>{
@@ -280,44 +331,15 @@ const ProductDetailPage = ()=>{
         try{ const key = `hb_cart_updated`; const cur = JSON.parse(localStorage.getItem('cart')); try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: cur, ts: Date.now() } })) }catch(e){} }catch(e){}
     }
     const handleClickBuy = ()=>{
-        // require login before buying
-        if (!ctUserID){
-            setShowLoginPrompt(true)
-            return
+        // New behavior: add item to cart and navigate to checkout (cart) page
+        try{
+            handleAddToCart()
+            showToast('Đã thêm vào giỏ hàng — chuyển đến giỏ hàng', 'success')
+            nav('/checkout')
+        }catch(e){
+            console.warn('handleClickBuy failed', e)
+            showToast('Không thể thêm vào giỏ hàng, thử lại', 'error')
         }
-        (async ()=>{
-            try{
-                // attempt server-side purchase (decrement warehouse)
-                const resp = await purchaseProduct(data.prodData._id, quantity)
-                if (!resp){
-                    showToast('Không thể kết nối server, vui lòng thử lại sau', 'error')
-                    return
-                }
-                // server returns { status, message, data }
-                if (resp.status === 200 || resp.status === '200'){
-                    // update local product data to reflect new warehouse/sold
-                    if (resp.data) setData(prev => ({...prev, prodData: resp.data}))
-                    // notify other tabs/components that this product changed (so product cards refresh)
-                    try{
-                        const pid = resp.data && resp.data._id ? resp.data._id : (data?.prodData?._id || id)
-                        if (pid){
-                            const key = `hb_product_updated_${pid}`
-                            try{ localStorage.setItem(key, Date.now().toString()) }catch(e){}
-                            try{ window.dispatchEvent(new CustomEvent('hb_product_updated', { detail: { id: pid, ts: Date.now() } })) }catch(e){}
-                        }
-                    }catch(e){ console.warn('notify update failed', e) }
-                    // add to cart and go to checkout
-                    handleAddToCart()
-                    showToast('Mua ngay thành công — đang chuyển đến thanh toán', 'success')
-                    nav('/checkout')
-                } else {
-                    showToast(resp.message || 'Không thể hoàn tất mua hàng', 'error')
-                }
-            }catch(e){
-                console.error('purchase error', e)
-                showToast('Lỗi khi xử lý mua hàng, vui lòng thử lại', 'error')
-            }
-        })()
     }
     
     // Voucher modal + limited quantity (user copies code, does not auto-apply)
@@ -524,7 +546,12 @@ const ProductDetailPage = ()=>{
                     <div className="rating-summary">
                         <h3>Đánh giá sản phẩm</h3>
                         <div className="score">{score}<span>/5</span></div>
-                        <div className="stars">{Array.from({length:5}).map((_,i)=>(<span key={i} className="star">★</span>))}</div>
+                        {(() => {
+                            const active = Math.max(0, Math.min(5, Math.floor(Number(score) || 0)))
+                            return (
+                                <div className="stars">{Array.from({length:5}).map((_,i)=>(<span key={i} className={`star ${i < active ? 'active': ''}`}>★</span>))}</div>
+                            )
+                        })()}
                         <a className="reviews-count" href="#reviews">{count} đánh giá</a>
                     </div>
                     <div className="reviews_cta">
@@ -564,7 +591,7 @@ const ProductDetailPage = ()=>{
                                                 <div className="review-stars">{Array.from({length:5}).map((_,i)=> <span key={i} className={`star ${i < (Number(r.rating)||0) ? 'active':''}`}>★</span>)}</div>
                                                     <div className="review-meta" style={{color:'#666',fontSize:13,marginLeft:'auto'}}>{fmtDate(r.createdAt)}{r.phone ? ` • ${maskPhone(r.phone)}` : ''}</div>
                                                     {/* show delete button when logged-in and owner of review */}
-                                                    {ctUserID && r.userId && String(ctUserID) === String(r.userId) ? (
+                                                    {((ctUserID && r.userId && String(ctUserID) === String(r.userId)) || isAdminClient) ? (
                                                         <button
                                                             className="delete-review"
                                                             disabled={deletingReviewId === r._id}
@@ -574,8 +601,10 @@ const ProductDetailPage = ()=>{
                                                                 try{
                                                                     const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/products'
                                                                     const url = `${API_BASE}/product/${data.prodData._id}/reviews/${r._id}`
-                                                                    const token = sessionStorage.getItem('token')
-                                                                    const headers = {'Content-Type':'application/json', 'x-user-id': ctUserID}
+                                                                    const token = sessionStorage.getItem('token') || localStorage.getItem('token')
+                                                                    const headers = {'Content-Type':'application/json'}
+                                                                    // only include x-user-id when not using admin token
+                                                                    if (!isAdminClient && ctUserID) headers['x-user-id'] = ctUserID
                                                                     if (token) headers['Authorization'] = `Bearer ${token}`
                                                                     const res = await fetch(url, { method: 'DELETE', headers, body: JSON.stringify({ userId: ctUserID }) })
                                                                     const json = await res.json().catch(()=>({}))
@@ -597,7 +626,7 @@ const ProductDetailPage = ()=>{
                                             </div>
                                             <div className="review-body-item" style={{marginTop:8,whiteSpace:'pre-wrap'}}>{r.comment}</div>
                                             {Array.isArray(r.images) && r.images.length ? (
-                                                <div className="review-images" style={{display:'flex',gap:8,marginTop:8}}>{r.images.map((src,i)=> <img key={i} src={src} alt={`review-${i}`} style={{width:120,height:120,objectFit:'cover',borderRadius:8}} />)}</div>
+                                                <div className="review-images" style={{display:'flex',gap:8,marginTop:8}}>{r.images.map((src,i)=> <img key={i} src={normalizeSrc(src)} alt={`review-${i}`} style={{width:120,height:120,objectFit:'cover',borderRadius:8}} />)}</div>
                                             ) : null}
                                         </article>
                                     ))}
@@ -647,11 +676,11 @@ const ProductDetailPage = ()=>{
                                         <div className="discount-badge">-{discountPct}%</div>
                                     )}
                                     <div className="mini-img">
-                                        <img src={imgs[0] || item.img || placeholderDataURL(title, 600,600)} alt={title} onError={(e)=>{ try{ e.currentTarget.src = placeholderDataURL(title, 600,600) }catch(err){ console.warn(err) } }} />
+                                        <img src={normalizeSrc(imgs[0] || item.img || placeholderDataURL(title, 600,600))} alt={title} onError={(e)=>{ try{ e.currentTarget.src = placeholderDataURL(title, 600,600) }catch(err){ console.warn(err) } }} />
                                     </div>
                                     <div className="mini-thumbs">
                                         {(imgs.slice(0,4)).map((s,i)=> (
-                                            <img key={i} src={s} alt={`thumb-${i}`} onError={(e)=>{ try{ e.currentTarget.style.display = 'none' }catch(err){ console.warn(err) } }} />
+                                            <img key={i} src={normalizeSrc(s)} alt={`thumb-${i}`} onError={(e)=>{ try{ e.currentTarget.style.display = 'none' }catch(err){ console.warn(err) } }} />
                                         ))}
                                     </div>
                                     <div className="mini-meta">
@@ -759,7 +788,7 @@ const ProductDetailPage = ()=>{
                                 return (
                                     <img 
                                         key={idx} 
-                                        src={src} 
+                                        src={normalizeSrc(src)} 
                                         alt={`thumb-${idx}`} 
                                         className={`img ${isActive ? 'thumb-active':''}`} 
                                         onClick={handleThumbClick}
@@ -772,7 +801,7 @@ const ProductDetailPage = ()=>{
                             })}
                         </div>
                         <div className="main-img">
-                            <img src={mainImgSrc || mainImage || images[0]} alt={data?.prodData?.title || 'product'} className={imgAnimating ? 'img-anim' : ''} onError={(e)=>{ try{ e.currentTarget.src = placeholderDataURL(data?.prodData?.title || 'product', 900,700) }catch(err){ console.warn(err) } }} />
+                            <img src={normalizeSrc(mainImgSrc || mainImage || images[0])} alt={data?.prodData?.title || 'product'} className={imgAnimating ? 'img-anim' : ''} onError={(e)=>{ try{ e.currentTarget.src = placeholderDataURL(data?.prodData?.title || 'product', 900,700) }catch(err){ console.warn(err) } }} />
                         </div>
                         {/* color selector removed from left column; it will be rendered under size in the info column */}
                 </div>
@@ -783,8 +812,17 @@ const ProductDetailPage = ()=>{
                     
                     <div className="rating-sold">
                         <div className="stars">
-                            {Array.from({length:5}).map((_,i)=> <span key={i} className="star">★</span>)}
-                            <span className="rating-count">(0)</span>
+                            {(() => {
+                                const avg = Number(data?.prodData?.ratingAverage) || 0
+                                const count = Number(data?.prodData?.ratingCount) || 0
+                                const active = Math.round(avg)
+                                return (
+                                    <>
+                                        {Array.from({length:5}).map((_,i)=> <span key={i} className={`star ${i < active ? 'active' : ''}`}>★</span>)}
+                                        <span className="rating-count">({count})</span>
+                                    </>
+                                )
+                            })()}
                             <span className="sep">|</span>
                             <span className="sold">Đã bán: <b>{data?.prodData?.sold ?? 0}</b></span>
                         </div>
