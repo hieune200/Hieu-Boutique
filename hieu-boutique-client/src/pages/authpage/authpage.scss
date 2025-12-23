@@ -56,6 +56,25 @@
         text-shadow: 0 4px 18px rgba(0,0,0,0.35);
     }
 
+        
+        /* compact variant used for small inline primary actions (e.g. "Quên mật khẩu") */
+        .btn-login-small{
+            background-color: var(--brand-red-soft);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            height: 36px;
+            padding: 6px 10px;
+            line-height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(198,11,11,0.08);
+            cursor: pointer;
+        }
+        .btn-login-small:hover{ transform: translateY(-1px); filter: brightness(0.99); }
     /* Brand styling for two-column layout */
     .auth-hero .brand{
         display: block;
@@ -333,29 +352,31 @@
     font-size: 14px;
 }
 
-/* Make the "Quên mật khẩu" button in the login card look like a small pill */
-        /* Stronger, high-specificity rule to ensure consistent button appearance */
+/* Make the "Quên mật khẩu" button in the login card use the brand button styles
+   but keep it a compact pill (so it doesn't become full-width like the main login button) */
         .contain-auth .login .login-feature > div > .link-like,
         .contain-auth .login .link-like {
-                    /* Plain inline link: remove border/background/shadow */
-                    background-color: transparent !important;
-                    color: #6b6b6b !important;
-                    text-decoration: underline !important;
-                    font-weight: 600;
-                    font-size: 14px;
-                    padding: 0 !important;
-                    height: auto;
-                    line-height: normal;
-                    display: inline;
-                    align-items: unset;
-                    justify-content: unset;
-                    border: none !important;
-                    border-radius: 0 !important;
-                    box-shadow: none !important;
-                    cursor: pointer;
-                }
-                .contain-auth .login .link-like:hover{ filter: brightness(0.98) }
-                .contain-auth .login .link-like:focus{ outline: none }
+            background-color: var(--brand-red-soft);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 6px 10px;
+            height: 36px;
+            line-height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none !important;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(198,11,11,0.08);
+            cursor: pointer;
+        }
+        .contain-auth .login .link-like:hover{
+            transform: translateY(-1px);
+            filter: brightness(0.99);
+        }
+        .contain-auth .login .link-like:focus{ outline: none }
         .btn-register{
             background-color: var(--brand-red);
             width: 100%;

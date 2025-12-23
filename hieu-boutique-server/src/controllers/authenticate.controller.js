@@ -88,13 +88,28 @@ async function checkLogin (req, res, next){
 async function getUserInfor (req, res, next){
     try{
         const id = req.params.id
+        if (!id) {
+            req.data = { status: '400', message: 'Missing user id' }
+            return next()
+        }
+        let objId = null
+        try{ objId = new ObjectId(id) } catch(e){
+            req.data = { status: '400', message: 'Invalid user id' }
+            return next()
+        }
+
         await ensureConnected()
         const accountsCollection = getAccountsCollection()
         if (!accountsCollection) throw new Error('Accounts collection unavailable')
-        const getInfor = await accountsCollection.findOne({_id: new ObjectId(id)})
+        const getInfor = await accountsCollection.findOne({_id: objId})
+        if (!getInfor) {
+            req.data = { status: '404', message: 'User not found' }
+            return next()
+        }
         let data = {
             username: getInfor?.username,
             name: getInfor?.name,
+            role: getInfor?.role || 'user',
             birthday: getInfor?.birthday,
             email: getInfor?.email,
             phoneNumber: getInfor?.phoneNumber,
@@ -894,3 +909,196 @@ async function linkSocialAccount(req, res, next) {
     }
     next()
 }
+
+// Admin metrics: totals, revenue, revenue by day (last 30 days)
+async function getAdminMetrics(req, res, next){
+    try{
+        await ensureConnected()
+        const productsCollection = getProductsCollection()
+        const guestOrdersCollection = getGuestOrdersCollection && getGuestOrdersCollection()
+        const accountsCollection = getAccountsCollection()
+
+        const totalProducts = productsCollection ? await productsCollection.countDocuments() : 0
+
+        // fetch guest orders and account orders for aggregation
+        const guestOrders = guestOrdersCollection ? await guestOrdersCollection.find({}).toArray() : []
+        const accountsWithOrders = accountsCollection ? await accountsCollection.find({ orders: { $exists: true, $ne: [] } }, { projection: { orders: 1, username: 1, email:1 } }).toArray() : []
+
+        // flatten account orders
+        const accountOrders = []
+        for (const acct of accountsWithOrders){
+            if (Array.isArray(acct.orders)){
+                for (const o of acct.orders){
+                    // attach minimal account info
+                    accountOrders.push({ ...o, _accountId: acct._id ? String(acct._id) : null, _accountUsername: acct.username || null, _accountEmail: acct.email || null })
+                }
+            }
+        }
+
+        // top products (by sold)
+        let topProducts = []
+        try{
+            if (productsCollection){
+                const tops = await productsCollection.find({}, { projection: { title:1, name:1, sold:1, price:1, masanpham:1, img:1 } }).sort({ sold: -1 }).limit(10).toArray()
+                topProducts = tops.map(p=>({ id: p._id, title: p.title || p.name || p.masanpham, sold: p.sold || 0, price: p.price || 0, img: p.img && (Array.isArray(p.img)?p.img[0]:p.img) }))
+            }
+        }catch(e){ /* ignore */ }
+
+        // top customers by order count and total spent
+        let topCustomers = []
+        try{
+            if (accountsWithOrders && accountsWithOrders.length){
+                const customers = []
+                for (const a of accountsWithOrders){
+                    const orders = Array.isArray(a.orders) ? a.orders : []
+                    let spent = 0
+                    for (const o of orders){
+                        spent += normalizeOrderTotal(o)
+                    }
+                    customers.push({ username: a.username || '—', email: a.email || null, orders: orders.length, spent })
+                }
+                customers.sort((x,y)=>y.spent - x.spent)
+                topCustomers = customers.slice(0,10)
+            }
+        }catch(e){ /* ignore */ }
+
+        const normalizeOrderTotal = (o)=>{
+            if (!o) return 0
+            // common fields
+            if (typeof o.totalPrice === 'number') return Number(o.totalPrice) || 0
+            if (typeof o.total === 'number') return Number(o.total) || 0
+            if (o.summary && typeof o.summary.total === 'number') return Number(o.summary.total) || 0
+            // try compute from orderList
+            if (Array.isArray(o.orderList) && o.orderList.length){
+                let s = 0
+                for (const it of o.orderList){
+                    const qty = Math.max(0, Number(it.quantity) || Number(it.qty) || 0)
+                    const price = Number(it.price || it.unitPrice || it.gia || it.salePrice || 0) || 0
+                    s += price * qty
+                }
+                if (s) return s
+            }
+            return 0
+        }
+
+        const extractOrderDate = (o, fallbackDate)=>{
+            if (!o) return fallbackDate || new Date()
+            if (o.createdAt) return new Date(o.createdAt)
+            if (o.date) return new Date(o.date)
+            if (o.order && o.order.createdAt) return new Date(o.order.createdAt)
+            return fallbackDate || new Date()
+        }
+
+        let totalOrders = 0
+        let totalRevenue = 0
+        const allOrders = []
+
+        // guestOrders stored as { order: data, createdAt }
+        for (const g of guestOrders){
+            const ord = g.order || g
+            const t = normalizeOrderTotal(ord)
+            const d = g.createdAt ? new Date(g.createdAt) : extractOrderDate(ord, g.createdAt || new Date())
+            const st = (ord && (ord.orderStatus || ord.status)) || 'new'
+            // only include completed orders in totals and revenue calculations
+            if (String(st).toLowerCase() === 'completed'){
+                totalOrders += 1
+                totalRevenue += t
+            }
+            allOrders.push({ source: 'guest', data: ord, total: t, createdAt: d, raw: g, status: st })
+        }
+
+        for (const a of accountOrders){
+            const t = normalizeOrderTotal(a)
+            const d = extractOrderDate(a, a.createdAt || new Date())
+            const st = (a && (a.orderStatus || a.status)) || 'new'
+            if (String(st).toLowerCase() === 'completed'){
+                totalOrders += 1
+                totalRevenue += t
+            }
+            allOrders.push({ source: 'account', data: a, total: t, createdAt: d, status: st })
+        }
+
+        // orders by status
+        const ordersByStatus = {}
+        for (const o of allOrders){
+            const st = o.status || (o.data && (o.data.orderStatus || o.data.status)) || o.status || 'new'
+            ordersByStatus[st] = (ordersByStatus[st] || 0) + 1
+        }
+
+        // revenue by day - last 30 days
+        const days = 30
+        const now = new Date()
+        const dayBuckets = {}
+        for (let i=0;i<days;i++){
+            const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days-1-i))
+            const key = dt.toISOString().slice(0,10)
+            dayBuckets[key] = 0
+        }
+        for (const o of allOrders){
+            // only add revenueByDay for completed orders
+            const st = o.status || (o.data && (o.data.orderStatus || o.data.status)) || 'new'
+            if (String(st).toLowerCase() !== 'completed') continue
+            const k = o.createdAt.toISOString().slice(0,10)
+            if (k in dayBuckets) dayBuckets[k] += Number(o.total || 0)
+        }
+        const revenueByDay = Object.keys(dayBuckets).map(k=>({ date: k, total: dayBuckets[k] }))
+
+        const avgOrderValue = totalOrders ? Math.round(totalRevenue / totalOrders) : 0
+
+        return res.json({ status: '200', data: { totalProducts, totalOrders, totalRevenue, revenueByDay, avgOrderValue, ordersByStatus, topProducts, topCustomers } })
+    }catch(err){
+        return makeServerErrorDirect(res, req, err, 'getAdminMetrics error')
+    }
+}
+
+// return recent orders (limit 50) normalized for admin UI
+async function getAdminRecentOrders(req, res, next){
+    try{
+        await ensureConnected()
+        const guestOrdersCollection = getGuestOrdersCollection && getGuestOrdersCollection()
+        const accountsCollection = getAccountsCollection()
+
+        const guestOrders = guestOrdersCollection ? await guestOrdersCollection.find({}).sort({ createdAt: -1 }).limit(200).toArray() : []
+        const accountsWithOrders = accountsCollection ? await accountsCollection.find({ orders: { $exists: true, $ne: [] } }, { projection: { orders: 1, username:1, email:1 } }).toArray() : []
+
+        const recent = []
+
+        for (const g of guestOrders){
+            const ord = g.order || g
+            const total = (typeof ord.totalPrice === 'number') ? ord.totalPrice : (Array.isArray(ord.orderList) ? ord.orderList.reduce((s,it)=>s + (Number(it.price||it.unitPrice||it.gia||0) * (Number(it.quantity)||0)),0) : 0)
+            recent.push({
+                source: 'guest',
+                orderCode: ord.orderCode || ord.code || (ord.orderCode||ord.code) || null,
+                customer: (ord.shipping && ord.shipping.name) || ord.name || ord.customer || 'Khách vãng lai',
+                email: (ord.shipping && ord.shipping.email) || ord.email || null,
+                createdAt: g.createdAt ? new Date(g.createdAt) : (ord.createdAt ? new Date(ord.createdAt) : new Date()),
+                status: ord.orderStatus || ord.status || 'new',
+                total: total
+            })
+        }
+
+        for (const acct of accountsWithOrders){
+            if (!Array.isArray(acct.orders)) continue
+            for (const o of acct.orders){
+                const total = (typeof o.totalPrice === 'number') ? o.totalPrice : (Array.isArray(o.orderList) ? o.orderList.reduce((s,it)=>s + (Number(it.price||it.unitPrice||it.gia||0) * (Number(it.quantity)||0)),0) : 0)
+                recent.push({
+                    source: 'account',
+                    orderCode: o.orderCode || o.code || null,
+                    customer: o.shipping?.name || o.name || acct.username || '—',
+                    email: o.shipping?.email || o.email || acct.email || null,
+                    createdAt: o.createdAt ? new Date(o.createdAt) : new Date(),
+                    status: o.orderStatus || o.status || 'new',
+                    total: total
+                })
+            }
+        }
+
+        recent.sort((a,b)=>b.createdAt - a.createdAt)
+        const limited = recent.slice(0,50)
+        return res.json({ status: '200', data: limited })
+    }catch(err){
+        return makeServerErrorDirect(res, req, err, 'getAdminRecentOrders error')
+    }
+}
+
+export { getAdminMetrics, getAdminRecentOrders }

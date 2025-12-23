@@ -67,10 +67,19 @@ const VIPPage = ()=>{
     async function fetchUser(){
       if (!ctUserID) return setUserData(null)
       const resp = await getInfor()
-      if (resp && resp.status == 201 && resp.data){
+      if (!resp) {
+        setUserData(null)
+      } else if (resp && resp.status == 201 && resp.data){
         setUserData(resp.data)
         const total = resp.data.totalOder || resp.data.totalOrder || resp.data.totalSpent || resp.data.total || 0
         // determine tier by thresholds (same as tiers definitions)
+        if (Number(total) >= 20000000) setUserTier('platinum')
+        else if (Number(total) >= 5000000) setUserTier('gold')
+        else setUserTier('silver')
+      } else if (resp && (resp.totalOder !== undefined || resp.totalOrder !== undefined || resp.totalSpent !== undefined)){
+        // handle raw user object
+        setUserData(resp)
+        const total = resp.totalOder || resp.totalOrder || resp.totalSpent || resp.total || 0
         if (Number(total) >= 20000000) setUserTier('platinum')
         else if (Number(total) >= 5000000) setUserTier('gold')
         else setUserTier('silver')

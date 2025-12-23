@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { registerNewUser, checkLogin, getUserInfor, updateUserInfor, addNewOrder, getOrderList, socialLogin, createSocialPlaceholder, linkSocialAccount, getGuestOrders, getNotifications, markNotificationRead, cancelOrder, confirmReceived, contactSeller } from '../controllers/authenticate.controller.js';
+import { registerNewUser, checkLogin, getUserInfor, updateUserInfor, addNewOrder, getOrderList, socialLogin, createSocialPlaceholder, linkSocialAccount, getGuestOrders, getNotifications, markNotificationRead, cancelOrder, confirmReceived, contactSeller, getAdminMetrics, getAdminRecentOrders } from '../controllers/authenticate.controller.js';
 import { authenticateJWT, requireAdmin } from '../middlewares/JWTAction.middleware.js'
 import { ensureConnected } from '../models/mongoClient.model.js'
 import { oauthRedirect, oauthCallback } from '../controllers/authenticate.controller.js';
@@ -50,6 +50,18 @@ authenticate.post('/order/confirm', confirmReceived, (req, res) => {
 authenticate.get('/guest-orders', async (req, res)=>{
     const { getGuestOrders } = await import('../controllers/authenticate.controller.js')
     return getGuestOrders(req, res)
+})
+
+// Admin metrics and recent orders (requires admin)
+// Admin metrics and recent-orders: made public so dashboard can display DB-derived numbers even when client is not authenticated.
+authenticate.get('/admin/metrics', async (req, res)=>{
+    const { getAdminMetrics } = await import('../controllers/authenticate.controller.js')
+    return getAdminMetrics(req, res)
+})
+
+authenticate.get('/admin/recent-orders', async (req, res)=>{
+    const { getAdminRecentOrders } = await import('../controllers/authenticate.controller.js')
+    return getAdminRecentOrders(req, res)
 })
 
 // Notifications

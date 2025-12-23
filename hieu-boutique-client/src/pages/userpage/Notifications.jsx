@@ -34,8 +34,8 @@ const Notifications = ({ userData }) => {
 
     function getCurrentUserId(){
         if (userData && userData._id) return userData._id
-        try{ const s = sessionStorage.getItem('userID'); if (s) return s }catch(e){}
-        try{ const l = localStorage.getItem('userID'); if (l) return l }catch(e){}
+        try{ const s = sessionStorage.getItem('userID'); if (s) return s }catch(e){ /* ignore */ }
+        try{ const l = localStorage.getItem('userID'); if (l) return l }catch(e){ /* ignore */ }
         return null
     }
 
@@ -85,7 +85,7 @@ const Notifications = ({ userData }) => {
                     const overrides = getLocalReadOverrides()
                     const deleted = getLocalDeletedOverrides()
                     const processed = normalized.map(n => ({ ...n, read: (overrides && overrides[n.id] !== undefined) ? overrides[n.id] : !!n.read })).filter(n => !(deleted && deleted[n.id]))
-                    try{ localStorage.setItem(cacheKey, JSON.stringify(processed)) }catch(e){}
+                    try{ localStorage.setItem(cacheKey, JSON.stringify(processed)) }catch(e){ /* ignore */ }
                     setNotifications(sortNotificationsArray(processed))
                     return
                 }
@@ -119,13 +119,13 @@ const Notifications = ({ userData }) => {
     },[userData?._id])
 
     // local persistence helpers (mirror Header.jsx fallback behavior)
-    function localReadKey(){ try{ if (userData && userData._id) return `hb_notifications_read_${userData._id}` }catch(e){} return `hb_notifications_read_anonymous` }
+    function localReadKey(){ try{ if (userData && userData._id) return `hb_notifications_read_${userData._id}` }catch(e){ /* ignore */ } return `hb_notifications_read_anonymous` }
     function getLocalReadOverrides(){ try{ const raw = localStorage.getItem(localReadKey()); if (!raw) return null; return JSON.parse(raw) }catch(e){ return null } }
-    function setLocalReadOverride(id, read){ try{ const key = localReadKey(); const cur = getLocalReadOverrides() || {}; cur[id] = !!read; localStorage.setItem(key, JSON.stringify(cur)) }catch(e){} }
+    function setLocalReadOverride(id, read){ try{ const key = localReadKey(); const cur = getLocalReadOverrides() || {}; cur[id] = !!read; localStorage.setItem(key, JSON.stringify(cur)) }catch(e){ /* ignore */ } }
 
-    function localDeletedKey(){ try{ if (userData && userData._id) return `hb_notifications_deleted_${userData._id}` }catch(e){} return `hb_notifications_deleted_anonymous` }
+    function localDeletedKey(){ try{ if (userData && userData._id) return `hb_notifications_deleted_${userData._id}` }catch(e){ /* ignore */ } return `hb_notifications_deleted_anonymous` }
     function getLocalDeletedOverrides(){ try{ const raw = localStorage.getItem(localDeletedKey()); if (!raw) return null; return JSON.parse(raw) }catch(e){ return null } }
-    function setLocalDeletedOverride(id){ try{ const key = localDeletedKey(); const cur = getLocalDeletedOverrides() || {}; cur[id] = true; localStorage.setItem(key, JSON.stringify(cur)) }catch(e){} }
+    function setLocalDeletedOverride(id){ try{ const key = localDeletedKey(); const cur = getLocalDeletedOverrides() || {}; cur[id] = true; localStorage.setItem(key, JSON.stringify(cur)) }catch(e){ /* ignore */ } }
 
     async function markRead(n){
         if (!n) return
@@ -136,22 +136,22 @@ const Notifications = ({ userData }) => {
             const API_BASE = import.meta.env.VITE_API_URL || ''
             const base = API_BASE.replace(/\/$/, '')
             await fetch(`${base}/auth/notifications/mark-read`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: userData?._id, createdAt: n.createdAt }) })
-        }catch(e){}
-        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){}
+        }catch(e){ /* ignore */ }
+        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){ /* ignore */ }
     }
 
     async function markUnread(n){
         if (!n) return
         setNotifications(prev => (prev || []).map(x => x.id === n.id ? { ...x, read: false } : x))
         setLocalReadOverride(n.id, false)
-        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){}
+        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){ /* ignore */ }
     }
 
     async function deleteNotification(n){
         if (!n) return
         setNotifications(prev => (prev || []).filter(x => x.id !== n.id))
         setLocalDeletedOverride(n.id)
-        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){}
+        try{ window.dispatchEvent(new CustomEvent('notif-updated')) }catch(e){ /* ignore */ }
     }
 
     function openItem(n){

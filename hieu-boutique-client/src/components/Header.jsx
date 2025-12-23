@@ -14,6 +14,7 @@ import shopAllImg from '../assets/imgs/common/header-shop-all.png'
 import { globalContext } from '../context/globalContext'
 import './componentStyle/Header.scss'
 import { useToast } from './ToastProvider'
+import { getInfor } from '../services/Auth.api'
 
 // Helper: render sub-collections inside mega-menu
 function collection (arr, categoryPath) {
@@ -59,6 +60,7 @@ const Header = ()=>{
     const [notifications, setNotifications] = useState([])
     // clicking cart navigates to checkout
     const [cartCount, setCartCount] = useState(0)
+    const [userRole, setUserRole] = useState(null)
 
     const computeCartCount = (cart) => {
         try{
@@ -226,6 +228,22 @@ const Header = ()=>{
     useEffect(()=>{
         // load notifications on login state change — when logged out, load cached/fallback items
         loadNotifications()
+    }, [ctUserID])
+
+    // fetch user info to discover role (used to show admin link)
+    useEffect(()=>{
+        let mounted = true
+        if (!ctUserID) { setUserRole(null); return }
+        (async ()=>{
+            try{
+                const resp = await getInfor()
+                if (!mounted) return
+                if (!resp){ setUserRole(null); return }
+                const info = resp.data ? resp.data : resp
+                setUserRole(info && info.role ? info.role : null)
+            }catch(e){ if (mounted) setUserRole(null) }
+        })()
+        return ()=> { mounted = false }
     }, [ctUserID])
 
         // listen for runtime 'new-notification' events (optional)
@@ -458,6 +476,9 @@ const Header = ()=>{
                 <Link to='/news' className="nav-t1 pointer">Tin tức</Link>
                 {/* <Link to='/address' className="nav-t1 pointer">Cửa hàng</Link> */}
                 <Link to='/contacts' className="nav-t1 pointer">Liên hệ</Link>
+                { userRole === 'admin' && (
+                    <Link to='/admin' className="nav-t1 pointer" aria-label="Admin">Admin</Link>
+                )}
                 <div className="nav-t2">
                     <div className="nav-list">
                         {

@@ -3,6 +3,22 @@ import crypto from 'crypto'
 import { ensureConnected, getProductsCollection, getHotProductsCollection, getCollectionsCollection, getAccountsCollection } from "../models/mongoClient.model.js"
 import { makeServerError } from "../utils/errorHelper.js"
 
+// Local fallback data used when MongoDB collections are unavailable.
+function makeFallbackIds(prefix = 'fallback-p', count = 12){
+    return Array.from({length: count}).map((_,i)=> `${prefix}-${i+1}`)
+}
+
+function makeFallbackProduct(id){
+    return {
+        _id: id,
+        title: 'Sample Fallback Product',
+        img: [],
+        price: 199000,
+        warehouse: 20,
+        sold: 0,
+        category: 'all'
+    }
+}
 // Helper: compute aggregates (counts, average, ratingCount, hasImagesCount) from reviews array
 function computeReviewAggregates(reviews){
     const arr = Array.isArray(reviews) ? reviews : []
@@ -113,7 +129,19 @@ async function productListID (req, res, next){
         }
     } 
     catch(err){
-        req.data = makeServerError(req, err)
+        // If DB unavailable, provide a lightweight fallback so frontend can render.
+        if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            const page = Math.max(1, Number(req.query.page) || 1)
+            const limit = Math.max(1, Number(req.query.limit) || 24)
+            const all = makeFallbackIds('fallback', 48)
+            const skip = (page - 1) * limit
+            const items = all.slice(skip, skip + limit)
+            const total = all.length
+            const totalPages = Math.max(1, Math.ceil(total / limit))
+            req.data = { status: '201', message: 'Fallback products (DB unavailable)', data: { page, limit, total, totalPages, items } }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -136,7 +164,11 @@ async function productNewListID (req, res, next){
         }
     } 
     catch(err){
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '201', message: 'Fallback new product groups', data: [makeFallbackIds('quan',3), makeFallbackIds('ao',3), makeFallbackIds('dam',3), makeFallbackIds('phukien',3), makeFallbackIds('chanvay',3)] }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -156,7 +188,11 @@ async function productDetail (req, res, next){
         }
     }
     catch(err){
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '201', message: 'Fallback product detail', data: makeFallbackProduct(req.params.id || 'fallback-1') }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -184,7 +220,11 @@ async function suggestListID (req, res, next){
         }
     }
     catch(err){
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '201', message: 'Fallback suggest list', data: makeFallbackIds('suggest',4) }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -203,7 +243,13 @@ async function hotProductListID (req, res, next){
         }
     }
     catch(err){
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('hotproducts collection unavailable')){
+            req.data = { status: '201', message: 'Fallback hot products', data: makeFallbackIds('hot',8) }
+        } else if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '201', message: 'Fallback hot products from products', data: makeFallbackIds('hot',8) }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -246,7 +292,11 @@ async function searchListID(req,res,next){
         }
     }
     catch(err){
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '201', message: 'Fallback search results', data: [] }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -268,7 +318,11 @@ async function collectionProductsID(req, res, next){
     }
     catch(err){
         console.error('collectionProductsID error', err)
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '201', message: 'Fallback collection products', data: makeFallbackIds('collection',6) }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -289,7 +343,11 @@ async function collectionInfo(req, res, next){
     }
     catch(err){
         console.error('collectionInfo error', err)
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('collections collection unavailable') || String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '201', message: 'Fallback collection info', data: null }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -340,6 +398,16 @@ async function createProduct(req, res, next){
         payload.updatedAt = new Date()
         // ensure sold count exists (default 0)
         payload.sold = Number(payload.sold) || 0
+        // new default fields
+        payload.sku = payload.sku || payload.masanpham || ''
+        payload.supplier = payload.supplier || ''
+        payload.costPrice = typeof payload.costPrice !== 'undefined' ? Number(payload.costPrice) : 0
+        payload.margin = typeof payload.margin !== 'undefined' ? Number(payload.margin) : 0
+        payload.tags = Array.isArray(payload.tags) ? payload.tags : (typeof payload.tags === 'string' ? payload.tags.split(',').map(s=>s.trim()).filter(Boolean) : (payload.tags ? [payload.tags] : []))
+        payload.dimensions = payload.dimensions || { width: null, height: null, depth: null }
+        payload.weight = typeof payload.weight !== 'undefined' ? Number(payload.weight) : 0
+        payload.active = typeof payload.active !== 'undefined' ? Boolean(payload.active) : true
+        payload.featured = typeof payload.featured !== 'undefined' ? Boolean(payload.featured) : false
         const insertRes = await productsCollection.insertOne(payload)
         const insertedId = insertRes.insertedId
         const doc = await productsCollection.findOne({_id: insertedId})
@@ -380,7 +448,11 @@ async function catalogInfo(req, res, next){
     }
     catch(err){
         console.error('catalogInfo error', err)
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '200', message: 'Fallback catalog (categories + collections)', data: { categories: [], collections: [] } }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -403,7 +475,11 @@ async function catalogMenu(req, res, next){
     }
     catch(err){
         console.error('catalogMenu error', err)
-        req.data = makeServerError(req, err)
+        if (String(err && err.message || '').toLowerCase().includes('products collection unavailable')){
+            req.data = { status: '200', message: 'Fallback catalog menu', data: [] }
+        } else {
+            req.data = makeServerError(req, err)
+        }
     }
     next()
 }
@@ -462,6 +538,20 @@ async function updateProductDetails(req, res, next){
         if (typeof payload.care !== 'undefined') update.care = payload.care
             // allow marking product as store-only (boolean)
             if (typeof payload.storeOnly !== 'undefined') update.storeOnly = Boolean(payload.storeOnly)
+
+        // accept new product editable fields
+        if (typeof payload.sku !== 'undefined') update.sku = payload.sku
+        if (typeof payload.supplier !== 'undefined') update.supplier = payload.supplier
+        if (typeof payload.costPrice !== 'undefined') update.costPrice = Number(payload.costPrice)
+        if (typeof payload.margin !== 'undefined') update.margin = Number(payload.margin)
+        if (typeof payload.tags !== 'undefined'){
+            if (Array.isArray(payload.tags)) update.tags = payload.tags
+            else if (typeof payload.tags === 'string') update.tags = payload.tags.split(',').map(s=>s.trim()).filter(Boolean)
+        }
+        if (typeof payload.dimensions !== 'undefined') update.dimensions = payload.dimensions
+        if (typeof payload.weight !== 'undefined') update.weight = Number(payload.weight)
+        if (typeof payload.active !== 'undefined') update.active = Boolean(payload.active)
+        if (typeof payload.featured !== 'undefined') update.featured = Boolean(payload.featured)
 
         if (Object.keys(update).length === 0){
             req.data = { status: '400', message: 'No detail payload provided' }

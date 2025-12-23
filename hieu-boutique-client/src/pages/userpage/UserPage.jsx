@@ -34,11 +34,18 @@ const UserPage = ()=>{
     const { showToast } = useToast()
     const getUserInfor = useCallback(async ()=>{
         const response = await getInfor()
-        if (response.status != 201){
+        if (!response){
+            showToast('Lỗi khi tải thông tin người dùng', 'error')
+            nav('/')
+            return
+        }
+        // normalize: support both { status, message, data } and raw data object
+        if (response.status && response.status != 201){
             showToast(response.message || 'Lỗi khi tải thông tin người dùng', 'error')
             nav('/')
             return
         }
+        const data = response.data ? response.data : response
         setLoading(false)
         // Prefill with social data if present (after social OAuth login)
         const prefills = {}
@@ -48,7 +55,7 @@ const UserPage = ()=>{
         if (socialName && (!response.data.name || response.data.name.trim() === '')) prefills.name = socialName
         if (socialEmail && (!response.data.email || response.data.email.trim() === '')) prefills.email = socialEmail
         if (socialAvatar && (!response.data.avatar || response.data.avatar.trim() === '')) prefills.avatar = socialAvatar
-        const merged = { ...response.data, ...prefills }
+        const merged = { ...data, ...prefills }
         // Normalize avatar value: if it's a raw base64 string without data: prefix, add a sensible default prefix.
         const normalizeAvatar = (a) => {
             if (!a) return '/ava.svg'
@@ -70,12 +77,17 @@ const UserPage = ()=>{
     }, [nav, showToast])
     const getOrderList = useCallback(async ()=>{
         const res = await getOrder()
-        if (res.status != 201){
+        if (!res){
+            showToast('Lỗi khi lấy đơn hàng', 'error')
+            return
+        }
+        if (res.status && res.status != 201){
             showToast(res.message || 'Lỗi khi lấy đơn hàng', 'error')
             return
         }
+        const list = res.data ? res.data : res
         setLoading(false)
-        setOrderList(res.data.reverse())
+        setOrderList(Array.isArray(list) ? list.reverse() : (list && list.reverse ? list.reverse() : []))
     }, [showToast])
     useEffect(()=>{
         const userInfoBoards = ['profile', 'notifications', 'vouchers']
@@ -97,6 +109,7 @@ const UserPage = ()=>{
             if (res && (res.status == 201 || res.status === '201')){
                 setSaveMessage({ type: 'success', text: res.message || 'Lưu thông tin thành công' })
                 setTimeout(()=> setSaveMessage(null), 3000)
+                try{ window.dispatchEvent(new CustomEvent('user-updated', { detail: { user: nextUserData, ts: Date.now() } })) }catch(e){}
             } else {
                 setSaveMessage({ type: 'error', text: res?.message || 'Lưu thất bại' })
                 setTimeout(()=> setSaveMessage(null), 3000)
@@ -143,9 +156,9 @@ const UserPage = ()=>{
                         const cur = JSON.parse(localStorage.getItem(key) || '[]')
                         cur.unshift(note)
                         localStorage.setItem(key, JSON.stringify(cur.slice(0,50)))
-                    }catch(e){}
+                    }catch(e){ /* ignore */ }
                     window.dispatchEvent(new CustomEvent('new-notification', { detail: note }))
-                }catch(e){}
+                }catch(e){ /* ignore */ }
         }catch(e){ console.error('handleCancelOrder error', e); showToast('Lỗi khi hủy đơn', 'error') }
     }
 
@@ -182,9 +195,9 @@ const UserPage = ()=>{
                     const cur = JSON.parse(localStorage.getItem(key) || '[]')
                     cur.unshift(note)
                     localStorage.setItem(key, JSON.stringify(cur.slice(0,50)))
-                }catch(e){}
+                }catch(e){ /* ignore */ }
                 window.dispatchEvent(new CustomEvent('new-notification', { detail: note }))
-            }catch(e){}
+            }catch(e){ /* ignore */ }
         }catch(e){ console.error('handleConfirmReceived error', e); showToast('Lỗi khi xác nhận', 'error') }
     }
 
@@ -208,7 +221,7 @@ const UserPage = ()=>{
                 }
             }
             localStorage.setItem('cart', JSON.stringify(cart))
-            try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart, ts: Date.now() } })) }catch(e){}
+            try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart, ts: Date.now() } })) }catch(e){ /* ignore */ }
             showToast('Đã thêm sản phẩm vào giỏ hàng', 'success')
             nav('/checkout')
         }catch(e){ console.error('handleReBuyOrder error', e); showToast('Lỗi khi thêm vào giỏ', 'error') }
@@ -232,7 +245,7 @@ const UserPage = ()=>{
 
     const onReviewSubmitted = ()=>{
         // refresh orders and product reviews if needed
-        try{ getOrderList() }catch(e){}
+        try{ getOrderList() }catch(e){ /* ignore */ }
     }
 
     const [contactOrder, setContactOrder] = useState(null)
@@ -272,7 +285,7 @@ const UserPage = ()=>{
             if (token) headers['Authorization'] = `Bearer ${token}`
             const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) })
             let data = {}
-            try{ data = await res.json() }catch(e){}
+            try{ data = await res.json() }catch(e){ /* ignore */ }
             if (res.ok) {
                 showToast(data.message || 'Gửi liên hệ thành công', 'success')
                 setContactOrder(null)
@@ -291,9 +304,9 @@ const UserPage = ()=>{
                             const cur = JSON.parse(localStorage.getItem(key) || '[]')
                             cur.unshift(note)
                             localStorage.setItem(key, JSON.stringify(cur.slice(0,50)))
-                        }catch(e){}
+                        }catch(e){ /* ignore */ }
                         window.dispatchEvent(new CustomEvent('new-notification', { detail: note }))
-                    }catch(e){}
+                    }catch(e){ /* ignore */ }
             } else {
                 showToast(data.message || 'Gửi liên hệ thất bại', 'error')
             }

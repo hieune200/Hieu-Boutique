@@ -10,6 +10,8 @@ const userSchema = {
     avatar: String,
     role: "user",
     order: Object,
+    loyaltyPoints: { type: Number, default: 0 },
+    isVIP: { type: Boolean, default: false },
 }
 
 export { userSchema }

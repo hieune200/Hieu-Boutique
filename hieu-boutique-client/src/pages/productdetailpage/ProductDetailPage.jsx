@@ -328,7 +328,7 @@ const ProductDetailPage = ()=>{
         localStorage.setItem("cart", JSON.stringify(newCart))
         showToast(`Thêm sản phẩm "${newProd.title}" size ${prodSize} Thành Công`, 'success')
         // notify other components (same-tab + cross-tab) that cart changed
-        try{ const key = `hb_cart_updated`; const cur = JSON.parse(localStorage.getItem('cart')); try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: cur, ts: Date.now() } })) }catch(e){} }catch(e){}
+        try{ const key = `hb_cart_updated`; const cur = JSON.parse(localStorage.getItem('cart')); try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: cur, ts: Date.now() } })) }catch(e){ /* ignore inner */ } }catch(e){ /* ignore outer */ }
     }
     const handleClickBuy = ()=>{
         // New behavior: add item to cart and navigate to checkout (cart) page

@@ -72,11 +72,21 @@ const Checkoutpage = ()=>{
                 setLoading(true)
                 try{
                     const res = await getInfor()
-                    if (!res || res.status != 201){
-                        showToast((res && res.message) ? res.message : 'Lỗi khi tải thông tin', 'error')
+                    if (!res){
+                        showToast('Lỗi khi tải thông tin', 'error')
                         setInforCheckout(null)
+                    } else if (res.status && res.status != 201){
+                        // API returned wrapper with error status (e.g., 401)
+                        if (res.status === 401) {
+                            // treat as no user info (not logged in)
+                            setInforCheckout(null)
+                        } else {
+                            showToast(res.message || 'Lỗi khi tải thông tin', 'error')
+                            setInforCheckout(null)
+                        }
                     } else {
-                        setInforCheckout(res.data)
+                        const data = res.data ? res.data : res
+                        setInforCheckout(data)
                     }
                 }catch(err){
                     console.warn('getInfor failed', err)
@@ -329,6 +339,7 @@ const Checkoutpage = ()=>{
                 }
                 window.dispatchEvent(new CustomEvent('new-notification', { detail: notif }))
             }catch(e){ console.warn('dispatch new-notification failed', e) }
+            try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: null, ts: Date.now() } })) }catch(e){}
         }
         showToast((res && res.message) ? res.message : 'Thông báo', (res && res.status == 201) ? 'success' : 'error')
         setLoading(false)
@@ -357,6 +368,7 @@ const Checkoutpage = ()=>{
                     }
                     window.dispatchEvent(new CustomEvent('new-notification', { detail: notif }))
                 }catch(e){ console.warn('dispatch new-notification failed', e) }
+                try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: null, ts: Date.now() } })) }catch(e){}
             }
             showToast((res && res.message) ? res.message : 'Thông báo', (res && res.status == 201) ? 'success' : 'error')
             // mark payment modal closed
@@ -379,12 +391,12 @@ const Checkoutpage = ()=>{
         // ensure cart has items
         const cartEmpty = !(cartData && Array.isArray(cartData) && cartData.length > 0)
         if (cartEmpty) {
-            try{ showToast('Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi đặt hàng.', 'error') }catch(e){}
+            try{ showToast('Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi đặt hàng.', 'error') }catch(e){ /* ignore */ }
             return
         }
         // require login
         if (!ctUserID) {
-            try{ showToast('Vui lòng đăng nhập để đặt hàng', 'error') }catch(e){}
+            try{ showToast('Vui lòng đăng nhập để đặt hàng', 'error') }catch(e){ /* ignore */ }
             const next = encodeURIComponent(location.pathname + location.search + location.hash)
             nav(`/login?next=${next}`)
             return
@@ -400,11 +412,11 @@ const Checkoutpage = ()=>{
         try{
             if (newCart && newCart.length) localStorage.setItem('cart', JSON.stringify(newCart))
             else localStorage.removeItem('cart')
-        }catch(e){}
+        }catch(e){ /* ignore */ }
         setCartData(newCart && newCart.length ? newCart : null)
         const tb = (newCart && Array.isArray(newCart)) ? newCart.reduce((a,e)=>a + (Number(e.count)||0), 0) : 0
         setTotalBill(tb)
-        try{ const cur = newCart; window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: cur, ts: Date.now() } })) }catch(e){}
+        try{ const cur = newCart; window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: cur, ts: Date.now() } })) }catch(e){ /* ignore */ }
     }
 
     const changeItemQuantity = (index, delta)=>{

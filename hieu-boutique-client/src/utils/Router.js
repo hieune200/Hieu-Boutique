@@ -23,6 +23,8 @@ import HotProductsPage from '../pages/collections/HotProductsPage'
 import SeasonPage from '../pages/collections/SeasonPage'
 import SalePage from '../pages/collections/SalePage'
 import EditHighlight from '../pages/admin/EditHighlight'
+import AdminPage from '../pages/admin/AdminPage'
+import withAdmin from '../utils/withAdmin'
 
 const router =[
     {
@@ -123,7 +125,12 @@ const router =[
     ,
     {
         path: "/admin/edit-highlight/:id",
-        element: EditHighlight
+        element: withAdmin(EditHighlight)
+    }
+    ,
+    {
+        path: "/admin",
+        element: withAdmin(AdminPage)
     }
     
 ]

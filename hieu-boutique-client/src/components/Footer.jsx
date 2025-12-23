@@ -5,6 +5,7 @@ import tiktok from '../assets/imgs/common/tiktok-logo.png'
 import pay from '../assets/imgs/common/pay-logo.png'
 import bct from '../assets/imgs/common/bct-logo.png'
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useToast } from './ToastProvider'
 import './componentStyle/Footer.scss'
 
@@ -12,8 +13,11 @@ const Footer = ()=>{
     const [email, setEmail] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const { showToast } = useToast()
+    const { pathname } = useLocation()
+    const hideNewsletter = pathname && pathname.toLowerCase().includes('/vip')
     return(
         <footer className="footer">
+            {!hideNewsletter && (
             <section className="footer_newsletter">
                 <div className="newsletter_left">
                     <h4>Đăng Ký Nhận Khuyến Mãi</h4>
@@ -50,6 +54,7 @@ const Footer = ()=>{
                     <a className="social-btn" href="https://www.tiktok.com/" aria-label="tiktok"><img src={tiktok} alt="tiktok"/></a>
                 </div>
             </section>
+            )}
             <section className="footer_mid">
                 <div className="footer_mid_contacts">
                     <h5>Liên hệ</h5>

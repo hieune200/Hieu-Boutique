@@ -137,8 +137,11 @@ const PromoFeatures = ()=>{
     try{
       if (!ctUserID) return
       const res = await getInfor()
-      if (res && res.status == 201 && res.data){
+      if (!res) return
+      if (res.status && res.status == 201 && res.data){
         setUsedCoupons(Array.isArray(res.data.usedCoupons) ? res.data.usedCoupons : [])
+      } else if (res.usedCoupons){
+        setUsedCoupons(Array.isArray(res.usedCoupons) ? res.usedCoupons : [])
       }
     }catch(e){ console.warn('fetchUserUsedCoupons', e) }
   }

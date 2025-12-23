@@ -5,7 +5,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { globalContext } from "../../context/globalContext";
 import { useToast } from '../../components/ToastProvider'
 import TermsModal from '../../components/TermsModal'
-import { registerAPI, loginAPI } from "../../services/Auth.api";
+import { registerAPI, loginAPI, getInfor } from "../../services/Auth.api";
 
 import './authpage.scss'
 import fbLogo from '../../assets/imgs/common/fb-color.svg'
@@ -39,6 +39,17 @@ const LoginPage = () => {
             // cleanup the other storage so there is single source of truth
             try{ if (loginData.remember){ sessionStorage.removeItem('userID'); sessionStorage.removeItem('token') } else { localStorage.removeItem('userID'); localStorage.removeItem('token') } }catch(e){ console.warn(e) }
             getUserID()
+            // fetch user info and redirect admins to admin UI
+            try{
+                const resp = await getInfor()
+                if (resp){
+                    const info = resp.data ? resp.data : resp
+                    if (info && info.role === 'admin'){
+                        nav('/admin')
+                        return
+                    }
+                }
+            }catch(e){ /* ignore and fall back to next */ }
             // redirect back to requested page if provided
             const params = new URLSearchParams(location.search)
             const next = params.get('next')
@@ -159,7 +170,7 @@ const LoginPage = () => {
                         <input type="checkbox" name="remember" id="remember" className="pointer" onChange={(e)=>handleLoginData("remember",e.target.checked)} />
                         <label htmlFor="remember" className="pointer">Ghi nhớ đăng nhập</label>
                     </div>
-                    <button type="button" className="link-like" onClick={()=>setShowForgot(true)}>Quên mật khẩu</button>
+                    <button type="button" className="btn-login-small" onClick={()=>setShowForgot(true)}>Quên mật khẩu</button>
                 </div>
                 {showForgot && <ForgotPasswordModal open={showForgot} onClose={()=>setShowForgot(false)} />}
                 <button className="btn-login pointer">Đăng Nhập</button>

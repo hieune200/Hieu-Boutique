@@ -1,0 +1,57 @@
+/* Basic admin dashboard styles (desktop-focused) */
+.admin-root{ display:flex; min-height:100vh; font-family: Inter, Arial, sans-serif }
+.admin-sidebar{ width:240px; background:var(--brand-accent, #c8102e); color:#fff; padding:24px 16px; box-shadow: 6px 0 18px rgba(0,0,0,0.08) }
+.admin-sidebar .admin-brand h3{ margin:0 0 6px; font-size:18px }
+.admin-sidebar .muted{ color: #bdbdbd; font-size:13px }
+.admin-sidebar nav ul{ list-style:none; padding:0; margin:18px 0 0 }
+.admin-sidebar nav li{ padding:12px 10px; border-radius:8px; margin-bottom:8px; cursor:pointer; color:#d3d7de }
+.admin-sidebar nav li.active{ background:#1f2933; color:#fff }
+
+.admin-main{ flex:1; background:#f6f7fb; padding:20px 28px }
+.admin-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px }
+.admin-search{ width:420px; padding:10px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.08) }
+.admin-icons{ font-size:18px }
+
+.admin-metrics{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px }
+.admin-metrics .card{ background:#fff; padding:16px; border-radius:10px; box-shadow: 0 6px 20px rgba(0,0,0,0.04) }
+.card-title{ font-size:13px; color:#6b7280 }
+.card-value{ font-size:20px; font-weight:700; margin-top:8px }
+
+.admin-content{ display:flex; gap:18px }
+.left-col{ flex:2 }
+.right-col{ flex:1 }
+.panel{ background:#fff; padding:14px; margin-bottom:16px; border-radius:10px; box-shadow: 0 6px 20px rgba(0,0,0,0.03) }
+.panel h4{ margin:0 0 10px }
+.chart-placeholder{ height:160px; background:linear-gradient(90deg,#eef2ff,#fef3c7); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#6b7280 }
+
+/* small sparkline bars inside chart panel */
+.sparkline{ display:flex; gap:4px; align-items:end; height:120px }
+.sparkline .bar{ width:8px; background:var(--brand-accent, #2563eb); border-radius:4px }
+
+.status{ display:inline-block; padding:6px 8px; border-radius:6px; font-size:13px }
+.status.new{ background:#eef2ff; color:var(--brand-accent, #2563eb) }
+.status.paid{ background:#e6ffed; color:#059669 }
+.status.cancled, .status.canceled{ background:#fff1f2; color:#dc2626 }
+.status.processing{ background:#fff7ed; color:#d97706 }
+
+.panel-top-products ul li img{ width:44px; height:44px; border-radius:6px; object-fit:cover }
+.panel-top-products ul li div{ vertical-align:middle }
+.admin-summary-row .card{ padding:12px }
+
+.table{ width:100%; border-collapse:collapse; font-size:14px }
+.table thead th{ text-align:left; padding:8px 6px; color:#6b7280; font-weight:600 }
+.table tbody td{ padding:10px 6px; border-top:1px solid #f1f5f9 }
+.thumb{ width:44px; height:44px; background:#f3f4f6; border-radius:6px }
+.link{ background:transparent; border:none; color:var(--brand-accent, #3b82f6); cursor:pointer; margin-right:8px }
+
+.panel-edit .form-row{ margin-bottom:10px }
+.panel-edit .form-row input{ width:100%; padding:8px 10px; border-radius:6px; border:1px solid rgba(0,0,0,0.08) }
+.panel-edit .form-row input{ padding:12px 14px; font-size:15px }
+.panel-edit .form-row.two{ display:flex; gap:12px }
+.panel-edit textarea{ font-size:15px; padding:12px; border-radius:8px }
+.form-actions{ display:flex; gap:10px; justify-content:flex-end }
+.btn{ padding:8px 12px; border-radius:8px; border:none; cursor:pointer }
+.btn.muted{ background:#f3f4f6 }
+.btn.primary{ background:var(--brand-accent, #2563eb); color:#fff }
+
+@media (max-width:900px){ .admin-metrics{ grid-template-columns: repeat(2,1fr) } .admin-search{ width:160px } }

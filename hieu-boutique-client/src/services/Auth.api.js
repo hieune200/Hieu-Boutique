@@ -33,11 +33,20 @@ async function loginAPI (data){
 
 async function getInfor (){
     const ObjectId = localStorage.getItem("userID") || sessionStorage.getItem("userID")
+    if (!ObjectId) {
+        // No logged-in user id available — return a clear result so UI can handle unauthenticated state
+        return { status: 401, message: 'No user id' }
+    }
     try{
         const r = await fetch(`${url}/user/${ObjectId}`)
         if (!r) return { status: 500, message: 'No response from server' }
+        // handle non-2xx status codes
+        if (!r.ok){
+            try{ const errJson = await r.json(); return errJson }catch(e){ return { status: r.status, message: r.statusText || 'Error' } }
+        }
         const json = await r.json()
-        return json
+        // normalize: controller returns { status, message, data }
+        return (json && json.data) ? json.data : json
     } catch (err){
         console.error('getInfor error', err)
         return { status: 500, message: 'Network error' }

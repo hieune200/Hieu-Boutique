@@ -84,9 +84,9 @@ export default function QuickAddPanelFixed({ product, image, onClose }) {
     // notify header and other components and show toast; stay on page
     try{
       const cur = JSON.parse(localStorage.getItem('cart'))
-      try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: cur, ts: Date.now() } })) }catch(e){}
-    }catch(e){}
-    try{ showToast(`Đã thêm ${product?.title} vào giỏ hàng`, 'success') }catch(e){}
+      try{ window.dispatchEvent(new CustomEvent('hb_cart_updated', { detail: { cart: cur, ts: Date.now() } })) }catch(e){ /* ignore */ }
+    }catch(e){ /* ignore */ }
+    try{ showToast(`Đã thêm ${product?.title} vào giỏ hàng`, 'success') }catch(e){ /* ignore */ }
     if (andClose) onClose && onClose()
   }
 

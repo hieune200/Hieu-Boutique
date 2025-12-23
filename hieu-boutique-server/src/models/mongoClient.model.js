@@ -12,7 +12,9 @@ let _collections = {
     guestOrders: null,
     hotProducts: null,
     collections: null,
+    categories: null,
     comments: null,
+    pageViews: null,
 };
 
 async function connectWithRetry(maxRetries = 5, baseDelay = 500) {
@@ -21,7 +23,18 @@ async function connectWithRetry(maxRetries = 5, baseDelay = 500) {
         return;
     }
 
-    client = new mongodb.MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
+    // Build mongo client options with sensible defaults and overrides via env vars.
+    // If using a SRV connection string (mongodb+srv://) TLS is enabled by default.
+    const isSrv = typeof uri === 'string' && uri.startsWith('mongodb+srv://');
+    const defaultTls = isSrv; // enable TLS by default for srv URIs
+    const mongoOptions = {
+        serverSelectionTimeoutMS: parseInt(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS) || 5000,
+        tls: typeof process.env.MONGO_TLS !== 'undefined' ? process.env.MONGO_TLS === 'true' : defaultTls,
+        tlsAllowInvalidCertificates: process.env.MONGO_TLS_INSECURE === 'true',
+        tlsAllowInvalidHostnames: process.env.MONGO_TLS_INSECURE === 'true',
+    };
+
+    client = new mongodb.MongoClient(uri, mongoOptions);
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
@@ -33,7 +46,9 @@ async function connectWithRetry(maxRetries = 5, baseDelay = 500) {
             _collections.guestOrders = db.collection('guestOrders');
             _collections.hotProducts = db.collection('hotProducts');
             _collections.collections = db.collection('collections');
+            _collections.categories = db.collection('categories');
             _collections.comments = db.collection('comments');
+            _collections.pageViews = db.collection('pageViews');
             // ensure a unique index on masanpham to prevent duplicates (idempotent)
             try{
                 _collections.products.createIndex({ masanpham: 1 }, { unique: true, sparse: true }).then(()=>{
@@ -99,8 +114,10 @@ function getProductsCollection() { return _collections.products; }
 function getAccountsCollection() { return _collections.accounts; }
 function getCouponsCollection() { return _collections.coupons; }
 function getGuestOrdersCollection() { return _collections.guestOrders; }
+function getOrdersCollection() { return _collections.guestOrders; } // alias for guestOrders
 function getHotProductsCollection() { return _collections.hotProducts; }
 function getCollectionsCollection() { return _collections.collections; }
 function getCommentsCollection() { return _collections.comments }
+function getCategoriesCollection() { return _collections.categories }
 
-export { client, ensureConnected, getProductsCollection, getAccountsCollection, getCouponsCollection, getGuestOrdersCollection, getHotProductsCollection, getCollectionsCollection, getCommentsCollection };
+export { client, ensureConnected, getProductsCollection, getAccountsCollection, getCouponsCollection, getGuestOrdersCollection, getOrdersCollection, getHotProductsCollection, getCollectionsCollection, getCommentsCollection, getCategoriesCollection };

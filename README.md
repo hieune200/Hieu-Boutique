@@ -23,3 +23,4 @@ The server supports SMTP mail sending and file-based logs. Add these variables t
 - `LOG_DIR` (optional): directory for file logs (logger default is `logs/`)
 
 Important: Do NOT commit your real credentials to public repositories. Use secrets in production.
+# Hieu-Boutique
